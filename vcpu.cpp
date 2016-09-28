@@ -174,6 +174,11 @@ void* Vcpu::getFramebuffer()
 	return (void*) &memory_[VCPU_FB_OFFSET];
 }
 
+unsigned getMemSize()
+{
+    return VCPU_MEM_SIZE;
+}
+
 std::string Vcpu::instrAtAddress(uint16_t address)
 {
     uint16_t instr = *((uint16_t*) &memory_[address]);

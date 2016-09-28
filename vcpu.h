@@ -45,11 +45,13 @@ public:
     unsigned getDisplayWidth();
     unsigned getDisplayHeight();
     void* getFramebuffer();
+	unsigned getMemSize();
     std::string instrAtAddress(uint16_t address);
     void start();
     void pause();
     void step();
     void addBreakpoint(uint16_t address);
+    void removeBreakpoint(uint16_t address);
 
     bool getNegativeFlag();
     void setNegativeFlag(bool flag);
