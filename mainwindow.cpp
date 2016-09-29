@@ -17,6 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
     screen_(new Screen(vcpu_->getFramebuffer(), vcpu_->getDisplayWidth(), vcpu_->getDisplayHeight())),
     disasModel_(new DisasModel(vcpu_))
 {
+    connect(this, &MainWindow::executionStopped, []()
+    {
+        while (1) ;
+    });
+
     ui_->setupUi(this);
     ui_->stateLayout->insertWidget(0, new AspectRatioWidget(screen_, screen_->sizeHint().width(), screen_->sizeHint().height()));
     ui_->disasView->setModel(disasModel_);

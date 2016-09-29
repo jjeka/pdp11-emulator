@@ -8,7 +8,7 @@ DisasModel::DisasModel(Vcpu* vcpu) :
 
 void DisasModel::reload()
 {
-    emit dataChanged(index(0), index(rowCount() - 1));
+    emit dataChanged(index(0), index( vcpu_->getMemSize() / sizeof(uint16_t) - 1));
 }
 
 int DisasModel::rowCount(const QModelIndex&) const
