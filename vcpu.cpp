@@ -378,7 +378,7 @@ void Vcpu::executeInstruction_()
 
         setNegativeFlag(psw.n);
         setZeroFlag(psw.z);
-        setOverflowFlag(psw.o);
+        setOverflowFlag(psw.v);
         setCarryFlag(psw.c);
     }
         break;
