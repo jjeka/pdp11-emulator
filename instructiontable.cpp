@@ -14,7 +14,7 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0060000, 0067777, "add"   , (void*) instr_add , VCPU_INSTR_TYPE_DOUBLE_OPERAND },
     { 0160000, 0167777, "sub"   , (void*) instr_sub , VCPU_INSTR_TYPE_DOUBLE_OPERAND },
 
-    { 0070000, 0070777, "mul"   , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
+    /*{ 0070000, 0070777, "mul"   , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
     { 0071000, 0071777, "div"   , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
     { 0072000, 0072777, "ash"   , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
     { 0073000, 0073777, "ashc"  , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
@@ -59,7 +59,7 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0006700, 0006777, "sxt", NULL, VCPU_INSTR_TYPE_SINGLE_OPERAND },
     { 0106700, 0106777, "mfps", NULL, VCPU_INSTR_TYPE_SINGLE_OPERAND },
 
-    { 0000000, 0000000 + 192, "system instruction", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },  // TODO: wtf?
+    { 0000000, 0000000 + 192, "system instruction", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
     { 0000400, 0000400 + 256, "br", NULL, VCPU_INSTR_TYPE_BRANCH },
     { 0001000, 0001000 + 256, "bne", NULL, VCPU_INSTR_TYPE_BRANCH },
     { 0001400, 0001400 + 256, "beq", NULL, VCPU_INSTR_TYPE_BRANCH },
@@ -73,10 +73,10 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0101400, 0101400 + 256, "blos", NULL, VCPU_INSTR_TYPE_BRANCH },
     { 0102000, 0102000 + 256, "bvc", NULL, VCPU_INSTR_TYPE_BRANCH },
     { 0102400, 0102400 + 256, "bvs", NULL, VCPU_INSTR_TYPE_BRANCH },
-    { 0103000, 0103000 + 256, "bcc or bhis", NULL, VCPU_INSTR_TYPE_BRANCH },  // TODO: ??
-    { 0103400, 0103400 + 256, "bcs or blo", NULL, VCPU_INSTR_TYPE_BRANCH },  // TODO: ??
+    { 0103000, 0103000 + 256, "bcc or bhis", NULL, VCPU_INSTR_TYPE_BRANCH },
+    { 0103400, 0103400 + 256, "bcs or blo", NULL, VCPU_INSTR_TYPE_BRANCH }*/
 
-    // TODO: jmp, halt, wait, reset etc.
+    // TODO: jmp, halt, wait, reset etc. + wtf last 2 instructions, check + system instructions collisions?
 };
 
 int VCPU_NUM_INSTRUCTIONS_IN_TABLE = sizeof (VCPU_INSTRUCTIONS) / sizeof(InstructionInfo);

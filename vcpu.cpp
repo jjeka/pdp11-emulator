@@ -3,12 +3,16 @@
 // TODO: state for instruction fails
 
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
-    registerNames_ { "R1", "R2", "R3", "R4", "R5", "R6", "SP", "PC" }
+    registerNames_ { "R1", "R2", "R3", "R4", "R5", "R6", "SP", "PC" },
+    thread_(std::bind(&Vcpu::threadFunc_, this))
 {
     assert(VCPU_RAM_SIZE > 0);
 
+    threadState_ = VCPU_THREAD_STATE_IDLE;
+    threadRunning_ = false;
     executionStoppedCallback_ = executionStoppedCallback;
     status_ = VCPU_STATUS_OK;
+    breakpointHit_ = false;
 
     FILE* file = fopen(romFile.c_str(), "r");
     if (!file)
@@ -45,41 +49,45 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
 
     // TODO: add check initialized
 
-    memset(memory_, 0, VCPU_BUFFER_SIZE * sizeof (uint8_t));
-    // ^ it's resets all registers
+    reset();
 
-    srand(time(0));
-    for (int i = 0; i < VCPU_MEM_SIZE; i++)
-        memory_[i] = rand() % 256; // TODO: remove
+    getPC() = VCPU_ROM_OFFSET;
 }
 
 Vcpu::~Vcpu()
 {
+    threadState_ = VCPU_THREAD_STATE_DESTROY;
+    thread_.join();
 }
 
- void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
- {
-     //assert(callback); // TODO: !
-     assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
-     assert(begin < end);
+VcpuStatus Vcpu::status()
+{
+    return status_;
+}
 
-     for (std::string& instrName : instructionNames_)
-     {
-         assert(name != instrName);
-     }
-     instructionNames_[numInstructionNames_] = name;
-     std::string* nameAddr = &instructionNames_[numInstructionNames_];
-     numInstructionNames_++;
+void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
+{
+    assert(callback);
+    assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
+    assert(begin < end);
 
-     for (int i = begin; i < end; i++)
-     {
-         assert(instructions_[i].type == VCPU_INSTR_TYPE_NOT_INITIALIZED);
+    for (std::string& instrName : instructionNames_)
+    {
+        assert(name != instrName);
+    }
+    instructionNames_[numInstructionNames_] = name;
+    std::string* nameAddr = &instructionNames_[numInstructionNames_];
+    numInstructionNames_++;
 
-         instructions_[i].type = type;
-         instructions_[i].callback = callback;
-         instructions_[i].name = nameAddr;
-     }
- }
+    for (int i = begin; i < end; i++)
+    {
+        assert(instructions_[i].type == VCPU_INSTR_TYPE_NOT_INITIALIZED);
+
+        instructions_[i].type = type;
+        instructions_[i].callback = callback;
+        instructions_[i].name = nameAddr;
+    }
+}
 
 std::string Vcpu::getRegisterName(unsigned n)
 {
@@ -274,58 +282,121 @@ std::string Vcpu::getOperand_(uint16_t instr, int begin, uint16_t data)
 
 bool Vcpu::getNegativeFlag()
 {
-    return VCPU_GET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT);
+    return GET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT);
 }
 
 void Vcpu::setNegativeFlag(bool flag)
 {
-    VCPU_SET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT, flag);
+    SET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT, flag);
 }
 
 bool Vcpu::getZeroFlag()
 {
-    return VCPU_GET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT);
+    return GET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT);
 }
 
 void Vcpu::setZeroFlag(bool flag)
 {
-    VCPU_SET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT, flag);
+    SET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT, flag);
 }
 
 bool Vcpu::getOverflowFlag()
 {
-    return VCPU_GET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT);
+    return GET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT);
 }
 
 void Vcpu::setOverflowFlag(bool flag)
 {
-    VCPU_SET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT, flag);
+    SET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT, flag);
 }
 
 bool Vcpu::getCarryFlag()
 {
-    return VCPU_GET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT);
+    return GET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT);
 }
 
 void Vcpu::setCarryFlag(bool flag)
 {
-    VCPU_SET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT, flag);
+    SET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT, flag);
 }
 
 void Vcpu::start()
 {
+    breakpointHit_ = false;
+    if (breakpointExists(getPC()))
+        breakpointHit_ = true;
+
+    if (threadState_ == VCPU_THREAD_STATE_IDLE)
+        threadState_ = VCPU_THREAD_STATE_RUNNING;
+}
+
+void Vcpu::threadFunc_()
+{
+    while (threadState_ != VCPU_THREAD_STATE_DESTROY)
+    {
+        while (threadState_ == VCPU_THREAD_STATE_IDLE)
+            usleep(1000);
+
+        threadRunning_ = true;
+        if (threadState_ == VCPU_THREAD_STATE_RUNNING)
+        {
+            while (threadState_ == VCPU_THREAD_STATE_RUNNING)
+            {
+                if (breakpointExists(getPC()))
+                {
+                    if (breakpointHit_) // we started at breakpoint so continue executing
+                        breakpointHit_ = false;
+                    else
+                    {
+                        breakpointHit_ = true;
+                        executionStoppedCallback_();
+                        threadState_ = VCPU_THREAD_STATE_IDLE;
+                    }
+                }
+
+                executeInstruction_();
+            }
+        }
+        else if (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+        {
+            executeInstruction_();
+            threadState_ = VCPU_THREAD_STATE_IDLE;
+        }
+        threadRunning_ = false;
+    }
 }
 
 void Vcpu::reset()
 {
+    for (int i = 0; i < (int) VCPU_BUFFER_SIZE; i++)
+    {
+        if (i < VCPU_ROM_OFFSET || i >= VCPU_ROM_OFFSET + VCPU_ROM_SIZE)
+            memory_[i] = 0;
+    }
+    // ^ it's resets all registers
 }
 
 void Vcpu::pause()
 {
+    if (threadState_ == VCPU_THREAD_STATE_RUNNING)
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+
+    while (!threadRunning_)
+        usleep(1000);
 }
 
 void Vcpu::step()
 {
+    if (threadState_ == VCPU_THREAD_STATE_IDLE)
+    {
+        threadRunning_ = true;
+        threadState_ = VCPU_THREAD_STATE_SINGLE_INSTRUCTION;
+
+        while (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+            usleep(1000);
+
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+    }
 }
 
 void Vcpu::addBreakpoint(uint16_t address)
@@ -343,12 +414,12 @@ bool Vcpu::breakpointExists(uint16_t address)
     return breakpoints_.find(address) != breakpoints_.end();
 }
 
-bool breakpointHit()
+bool Vcpu::breakpointHit()
 {
-    return false;
+    return breakpointHit_;
 }
 
-bool Vcpu::readonlyAddr_(uint16_t addr)
+bool Vcpu::readonlyAddr_(uint16_t addr) // TODO: use it (needed)?
 {
     return addr >= VCPU_RAM_OFFSET && addr < VCPU_RAM_OFFSET + VCPU_RAM_SIZE;
 }
@@ -383,8 +454,10 @@ void Vcpu::executeInstruction_()
     }
         break;
 
+        // TODO: other types
+
     default:
-        //abort(); TODO:
+        abort();
         break;
     }
 }

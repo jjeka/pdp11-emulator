@@ -22,14 +22,17 @@ SOURCES += main.cpp\
     clickablelabel.cpp \
     aspectratiowidget.cpp \
     instructions.cpp \
-    instructiontable.cpp
+    instructiontable.cpp \
+    utils.cpp
 
 HEADERS  += mainwindow.h \
     vcpu.h \
     screen.h \
     disasmodel.h \
     clickablelabel.h \
-    aspectratiowidget.h
+    aspectratiowidget.h \
+    instructions.h \
+    utils.h
     instructions.h
 
 FORMS    += mainwindow.ui

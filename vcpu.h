@@ -8,6 +8,8 @@
 #include <cstring>
 #include <set>
 #include <functional>
+#include <thread>
+#include <unistd.h>
 
 #include "instructions.h"
 
@@ -46,9 +48,6 @@
 #define VCPU_ADDR_MODE_AUTODECREMENT_DEFFERED   5
 #define VCPU_ADDR_MODE_INDEX                    6
 #define VCPU_ADDR_MODE_INDEX_DEFERRED           7
-
-#define VCPU_GET_BIT(a,n) ((a >> n) & 1)
-#define VCPU_SET_BIT(a,n,val) a ^= ((-val ^ a) & (1 << n))
 
 #define VCPU_GET_REG(instr,begin) ((instr >> begin) & 7)
 #define VCPU_GET_ADDR_MODE(instr,begin) ((instr >> (begin + 3)) & 7)
@@ -118,7 +117,21 @@ private:
     int numInstructionNames_;
 
     std::function<void()> executionStoppedCallback_;
+    std::thread thread_;
 
+    enum VcpuThreadState
+    {
+        VCPU_THREAD_STATE_IDLE,
+        VCPU_THREAD_STATE_RUNNING,
+        VCPU_THREAD_STATE_SINGLE_INSTRUCTION,
+        VCPU_THREAD_STATE_DESTROY
+    };
+
+    VcpuThreadState threadState_;
+    bool threadRunning_;
+    bool breakpointHit_;
+
+    void threadFunc_();
     void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type);
     std::string getOperand_(uint16_t instr, int begin, uint16_t data);
     std::string getRegisterByInstr_(uint16_t instr, int begin);

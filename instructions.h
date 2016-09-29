@@ -1,7 +1,7 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
-#include <cinttypes>
+#include "utils.h"
 #include <string>
 
 enum InstructionType

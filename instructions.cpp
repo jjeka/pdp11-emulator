@@ -1,11 +1,5 @@
 #include "instructions.h"
 
-int32_t sign(int32_t x) // TODO: utils
-{
-    return (x < 0) ? -1 : ((x > 0) ? 1 : 0);
-}
-
-//==================================
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
 
 void instr_mov(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
