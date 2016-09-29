@@ -459,7 +459,31 @@ void Vcpu::executeInstruction_()
     }
         break;
 
-        // TODO: other types
+    case VCPU_INSTR_TYPE_OPERAND_REGISTER:
+    {
+        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
+        MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
+
+        ((vcpu_instr_operand_register_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw);
+    }
+    break;
+
+    case VCPU_INSTR_TYPE_SINGLE_OPERAND:
+    {
+        MemRegion region(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
+
+        ((vcpu_instr_single_operand_callback*) instructions_[instr].callback)(region, psw);
+    }
+    break;
+
+    case VCPU_INSTR_TYPE_BRANCH:
+    {
+        uint8_t offset = (instr & 255);
+        ((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw);
+    }
+    break;
+
+        // TODO: other types (jump, SUBROUTINE), halt, wait, reset, nop, spl, mfpi, mtpi, mfpd, mtpd, Condition Code Operator
 
     default:
         abort();

@@ -103,3 +103,9 @@ void instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
     psw.z = (dst == 0);
     psw.v = false;
 }
+
+// VCPU_INSTR_TYPE_OPERAND_REGISTER
+
+// VCPU_INSTR_TYPE_SINGLE_OPERAND
+
+// VCPU_INSTR_TYPE_BRANCH

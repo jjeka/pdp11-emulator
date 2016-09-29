@@ -10,8 +10,8 @@ enum InstructionType
     VCPU_INSTR_TYPE_NOT_INITIALIZED     = 0,
     VCPU_INSTR_TYPE_NOT_IMPLEMENTED     = 1,
     VCPU_INSTR_TYPE_DOUBLE_OPERAND      = 2,
-    VCPU_INSTR_TYPE_SINGLE_OPERAND      = 3,
-    VCPU_INSTR_TYPE_OPERAND_REGISTER    = 4,
+    VCPU_INSTR_TYPE_OPERAND_REGISTER    = 3,
+    VCPU_INSTR_TYPE_SINGLE_OPERAND      = 4,
     VCPU_INSTR_TYPE_BRANCH              = 5
 };
 
@@ -36,6 +36,9 @@ struct VcpuPSW
 };
 
 typedef void vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+typedef void vcpu_instr_operand_register_callback(MemRegion& reg, MemRegion& src, VcpuPSW& psw);
+typedef void vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
+typedef void vcpu_instr_branch_callback(uint16_t& pc, uint8_t offset, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
 void instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
@@ -52,5 +55,11 @@ void instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 void instr_addb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 void instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 void instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+
+// VCPU_INSTR_TYPE_OPERAND_REGISTER
+
+// VCPU_INSTR_TYPE_SINGLE_OPERAND
+
+// VCPU_INSTR_TYPE_BRANCH
 
 #endif // INSTRUCTIONS_H
