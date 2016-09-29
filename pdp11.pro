@@ -20,6 +20,7 @@ SOURCES += main.cpp\
     screen.cpp \
     disasmodel.cpp \
     clickablelabel.cpp \
+    aspectratiowidget.cpp \
     instructions.cpp \
     instructiontable.cpp
 
@@ -28,6 +29,7 @@ HEADERS  += mainwindow.h \
     screen.h \
     disasmodel.h \
     clickablelabel.h \
+    aspectratiowidget.h
     instructions.h
 
 FORMS    += mainwindow.ui
