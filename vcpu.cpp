@@ -464,7 +464,7 @@ void Vcpu::executeInstruction_()
         MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
         MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
 
-        ((vcpu_instr_operand_register_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw);
+        ((vcpu_instr_operand_register_callback*) instructions_[instr].callback)(regRegion, srcRegion, psw);
     }
     break;
 
