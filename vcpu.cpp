@@ -1,7 +1,5 @@
 #include "vcpu.h"
 
-// TODO: state for instruction fails
-
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
     registerNames_ { "R1", "R2", "R3", "R4", "R5", "R6", "SP", "PC" },
     thread_(std::bind(&Vcpu::threadFunc_, this))
@@ -355,6 +353,12 @@ void Vcpu::threadFunc_()
                 }
 
                 executeInstruction_();
+
+                if (status_ != VCPU_STATUS_OK)
+                {
+                    threadState_ = VCPU_THREAD_STATE_IDLE;
+                    executionStoppedCallback_();
+                }
             }
         }
         else if (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
@@ -368,6 +372,12 @@ void Vcpu::threadFunc_()
 
 void Vcpu::reset()
 {
+    if (threadState_ == VCPU_THREAD_STATE_RUNNING || threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+
+    while (threadRunning_)
+        usleep(1000);
+
     for (int i = 0; i < (int) VCPU_BUFFER_SIZE; i++)
     {
         if (i < VCPU_ROM_OFFSET || i >= VCPU_ROM_OFFSET + VCPU_ROM_SIZE)
@@ -378,10 +388,10 @@ void Vcpu::reset()
 
 void Vcpu::pause()
 {
-    if (threadState_ == VCPU_THREAD_STATE_RUNNING)
+    if (threadState_ == VCPU_THREAD_STATE_RUNNING || threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
-    while (!threadRunning_)
+    while (threadRunning_)
         usleep(1000);
 }
 
@@ -419,38 +429,33 @@ bool Vcpu::breakpointHit()
     return breakpointHit_;
 }
 
-bool Vcpu::readonlyAddr_(uint16_t addr) // TODO: use it (needed)?
-{
-    return addr >= VCPU_RAM_OFFSET && addr < VCPU_RAM_OFFSET + VCPU_RAM_SIZE;
-}
-
 void Vcpu::executeInstruction_()
 {
     uint16_t instr = getMemoryWord_(getPC());
 
+    if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
+    {
+        status_ = VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION;
+        return;
+    }
+
     assert(instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
-    assert(instructions_[instr].type != VCPU_INSTR_TYPE_NOT_IMPLEMENTED);
     assert(instructions_[instr].callback);
 
+    uint16_t prevPC = getPC();
     getPC() += sizeof (uint16_t);
+
+    VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
 
     switch (instructions_[instr].type)
     {
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
     {
         uint16_t incrementSize = (instr & (1 << 15)) ? 1 : 2;
+        MemRegion dstRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize), this);
+        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize), this);
 
-        uint16_t& src = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize);
-        uint16_t& dst = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize);
-
-        VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
-
-        ((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dst, src, psw);
-
-        setNegativeFlag(psw.n);
-        setZeroFlag(psw.z);
-        setOverflowFlag(psw.v);
-        setCarryFlag(psw.c);
+        ((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw);
     }
         break;
 
@@ -460,6 +465,14 @@ void Vcpu::executeInstruction_()
         abort();
         break;
     }
+
+    setNegativeFlag(psw.n);
+    setZeroFlag(psw.z);
+    setOverflowFlag(psw.v);
+    setCarryFlag(psw.c);
+
+    if (status_ != VCPU_STATUS_OK)
+        getPC() = prevPC;
 }
 
 uint16_t& Vcpu::getMemoryWord_(uint16_t addr)

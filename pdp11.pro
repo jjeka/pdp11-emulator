@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     aspectratiowidget.cpp \
     instructions.cpp \
     instructiontable.cpp \
-    utils.cpp
+    utils.cpp \
+    memregion.cpp
 
 HEADERS  += mainwindow.h \
     vcpu.h \
@@ -32,7 +33,8 @@ HEADERS  += mainwindow.h \
     clickablelabel.h \
     aspectratiowidget.h \
     instructions.h \
-    utils.h
+    utils.h \
+    memregion.h
     instructions.h
 
 FORMS    += mainwindow.ui

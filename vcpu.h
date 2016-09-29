@@ -56,7 +56,9 @@ enum VcpuStatus
 {
     VCPU_STATUS_OK,
     VCPU_STATUS_FAIL_OPEN_ROM,
-    VCPU_STATUS_WRONG_ROM_SIZE
+    VCPU_STATUS_WRONG_ROM_SIZE,
+    VCPU_STATUS_WRITE_FROM_READONLY,
+    VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION
 };
 
 class Vcpu
@@ -135,11 +137,11 @@ private:
     void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type);
     std::string getOperand_(uint16_t instr, int begin, uint16_t data);
     std::string getRegisterByInstr_(uint16_t instr, int begin);
-    bool readonlyAddr_(uint16_t addr);
     void executeInstruction_();
     uint16_t& getMemoryWord_(uint16_t addr);
     uint16_t& getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
 
+    friend class MemRegion;
 };
 
 #endif // VCPU_H

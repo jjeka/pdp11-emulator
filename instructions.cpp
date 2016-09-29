@@ -2,7 +2,7 @@
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
 
-void instr_mov(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     dst = src;
     psw.n = (int16_t(src) < 0);
@@ -10,15 +10,15 @@ void instr_mov(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.v = false;
 }
 
-void instr_movb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    ((uint8_t&) dst) = uint8_t (src);
+    dst.set8(uint8_t (src));
     psw.n = (int16_t(src) < 0);
     psw.z = (int16_t(src) == 0);
     psw.v = false;
 }
 
-void instr_cmp(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     int32_t res = int16_t(src) - int16_t(dst);
     psw.n = (res < 0);
@@ -27,7 +27,7 @@ void instr_cmp(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.c = (res > INT16_MAX);
 }
 
-void instr_cmpb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     int16_t res = int8_t(src) - int8_t(dst);
     psw.n = (res < 0);
@@ -36,7 +36,7 @@ void instr_cmpb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.c = (res > INT8_MAX);
 }
 
-void instr_add(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     int32_t res = int16_t(src) + int16_t(dst);
     dst = int16_t(res);
@@ -46,7 +46,7 @@ void instr_add(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.c = (res > INT16_MAX);
 }
 
-void instr_sub(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     int32_t res = int16_t(src) - int16_t(dst);
     dst = int16_t(res);
@@ -56,7 +56,7 @@ void instr_sub(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.c = (res > INT16_MAX);
 }
 
-void instr_bit(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bit(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     dst = (src & dst);
     psw.n = ((dst & (1<<15)) != 0);
@@ -64,15 +64,15 @@ void instr_bit(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.v = false;
 }
 
-void instr_bitb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bitb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    ((uint8_t&) dst) = (uint8_t(src) & uint8_t(dst));
+    dst.set8(uint8_t(src) & uint8_t(dst));
     psw.n = ((dst & (1<<7)) != 0);
     psw.z = (dst == 0);
     psw.v = false;
 }
 
-void instr_bic(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bic(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     dst = ((~src) & dst);
     psw.n = ((dst & (1<<15)) != 0);
@@ -80,15 +80,15 @@ void instr_bic(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.v = false;
 }
 
-void instr_bicb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bicb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    ((uint8_t&) dst) = (uint8_t(~src) & uint8_t(dst));
+    dst.set8(uint8_t(~src) & uint8_t(dst));
     psw.n = ((dst & (1<<7)) != 0);
     psw.z = (dst == 0);
     psw.v = false;
 }
 
-void instr_bis(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bis(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     dst = (src | dst);
     psw.n = ((dst & (1<<15)) != 0);
@@ -96,9 +96,9 @@ void instr_bis(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
     psw.v = false;
 }
 
-void instr_bisb(uint16_t& dst, uint16_t& src, VcpuPSW& psw)
+void instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    ((uint8_t&) dst) = (uint8_t(src) | uint8_t(dst));
+    dst.set8(uint8_t(src) | uint8_t(dst));
     psw.n = ((dst & (1<<7)) != 0);
     psw.z = (dst == 0);
     psw.v = false;

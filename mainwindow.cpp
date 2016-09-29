@@ -147,7 +147,7 @@ void MainWindow::on_pauseButton_clicked()
 
 void MainWindow::on_resetButton_clicked()
 {
-    //vcpu_->reset();
+    vcpu_->reset();
 }
 
 void MainWindow::on_stepButton_clicked()

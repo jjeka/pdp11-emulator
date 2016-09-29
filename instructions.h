@@ -2,6 +2,7 @@
 #define INSTRUCTIONS_H
 
 #include "utils.h"
+#include "memregion.h"
 #include <string>
 
 enum InstructionType
@@ -34,22 +35,22 @@ struct VcpuPSW
     bool c;
 };
 
-typedef void vcpu_instr_double_operand_callback(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
+typedef void vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
-void instr_mov(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_movb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_cmp(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_cmpb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bit(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bitb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bic(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bicb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bis(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_bisb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_add(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_addb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_sub(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
-void instr_subb(uint16_t& dst, uint16_t& src, VcpuPSW& psw);
+void instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bit(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bitb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bic(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bicb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bis(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_addb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+void instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 
 #endif // INSTRUCTIONS_H
