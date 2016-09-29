@@ -37,7 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
         {
             bool ok;
             int val = value->text().toInt(&ok, 8);
-            fprintf(stderr, "dfsdfsdf");
             if (ok)
                 vcpu_->getRegister(i) = val;
             value->setText(QString().sprintf("%.8o", (unsigned) vcpu_->getRegister(i)));
@@ -156,7 +155,7 @@ void MainWindow::on_stepButton_clicked()
     setVcpuControlsToState_(true);
     vcpu_->step();
     setVcpuControlsToState_(false);
-
+    refreshCpuState_();
 }
 
 void MainWindow::setVcpuControlsToState_(bool running)
