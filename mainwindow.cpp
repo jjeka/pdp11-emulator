@@ -12,7 +12,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui_(new Ui::MainWindow),
-    vcpu_(new Vcpu("rom.bin")),
+    vcpu_(new Vcpu("rom.bin", [this](){emit executionStopped();})),
     registerValues_(vcpu_->getNRegisters()),
     screen_(new Screen(vcpu_->getFramebuffer(), vcpu_->getDisplayWidth(), vcpu_->getDisplayHeight())),
     disasModel_(new DisasModel(vcpu_))
@@ -27,6 +27,11 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         QString label = vcpu_->getRegisterName(i).c_str();
         QLineEdit* value = new QLineEdit();
+
+        connect(value, &QLineEdit::editingFinished, [this, value, i]()
+        {
+            vcpu_->getRegister(i) = 66;
+        });
 
         ui_->registersLayout->addRow(label, value);
         registerValues_[i] = value;
