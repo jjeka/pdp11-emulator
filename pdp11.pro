@@ -16,9 +16,17 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    vcpu.cpp
+    vcpu.cpp \
+    screen.cpp \
+    disasmodel.cpp \
+    clickablelabel.cpp \
+    aspectratiowidget.cpp
 
 HEADERS  += mainwindow.h \
-    vcpu.h
+    vcpu.h \
+    screen.h \
+    disasmodel.h \
+    clickablelabel.h \
+    aspectratiowidget.h
 
 FORMS    += mainwindow.ui
