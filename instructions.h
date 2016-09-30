@@ -35,26 +35,26 @@ struct VcpuPSW
     bool c;
 };
 
-typedef void vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-typedef void vcpu_instr_operand_register_callback(MemRegion& reg, MemRegion& src, VcpuPSW& psw);
-typedef void vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
-typedef void vcpu_instr_branch_callback(uint16_t& pc, uint8_t offset, VcpuPSW& psw);
+typedef bool vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+typedef bool vcpu_instr_operand_register_callback(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+typedef bool vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
+typedef bool vcpu_instr_branch_callback(uint16_t& pc, uint8_t offset, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
-void instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bit(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bitb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bic(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bicb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bis(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_addb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-void instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bit(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bitb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bic(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bicb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bis(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_addb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_OPERAND_REGISTER
 
