@@ -62,9 +62,9 @@ VcpuStatus Vcpu::status()
 
 void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
 {
-    assert(callback);
+    assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED);
     assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
-    assert(begin < end);
+    assert(begin <= end);
 
     for (std::string& instrName : instructionNames_)
     {
@@ -74,7 +74,7 @@ void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void*
     std::string* nameAddr = &instructionNames_[numInstructionNames_];
     numInstructionNames_++;
 
-    for (int i = begin; i < end; i++)
+    for (int i = begin; i <= end; i++)
     {
         assert(instructions_[i].type == VCPU_INSTR_TYPE_NOT_INITIALIZED);
 

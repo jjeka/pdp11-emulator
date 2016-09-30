@@ -57,6 +57,11 @@ bool instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 bool instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_OPERAND_REGISTER
+bool instr_mul(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+bool instr_div(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+bool instr_ash(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+bool instr_xor(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_SINGLE_OPERAND
 
