@@ -11,7 +11,7 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     executionStoppedCallback_ = executionStoppedCallback;
     status_ = VCPU_STATUS_OK;
 
-    FILE* file = fopen(romFile.c_str(), "r");
+    FILE* file = fopen(romFile.c_str(), "rb");
     if (!file)
     {
         status_ = VCPU_STATUS_FAIL_OPEN_ROM;
@@ -26,7 +26,7 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
         return;
     }
     fseek(file, 0, SEEK_SET);
-    fread(&memory_[VCPU_RAM_OFFSET], 1, VCPU_RAM_SIZE, file);
+    fread(&memory_[VCPU_ROM_OFFSET], 1, VCPU_ROM_SIZE, file);
     fclose(file);
 
     for (Instruction& instr : instructions_)
