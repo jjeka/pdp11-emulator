@@ -468,7 +468,8 @@ void Vcpu::executeInstruction_()
 {
     uint16_t instr = getMemoryWord_(getPC());
 
-    if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
+    if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED ||
+        instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED) // TODO: remove
     {
         status_ = VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION;
         threadState_ = VCPU_THREAD_STATE_IDLE;
