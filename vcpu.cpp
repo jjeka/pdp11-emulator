@@ -58,7 +58,7 @@ Vcpu::~Vcpu()
     thread_.join();
 }
 
-VcpuStatus Vcpu::status()
+VcpuStatus Vcpu::getStatus()
 {
     return status_;
 }

@@ -67,7 +67,7 @@ public:
     Vcpu(std::string romFile, std::function<void()> executionStoppedCallback);
     ~Vcpu();
 
-    VcpuStatus status();
+    VcpuStatus getStatus();
 
     std::string getRegisterName(unsigned n);
     uint16_t& getRegister(unsigned n);
