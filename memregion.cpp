@@ -4,7 +4,7 @@
 MemRegion::MemRegion(uint16_t* mem, Vcpu* cpu) :
     mem_(mem),
     cpu_(cpu),
-    readonly_(*mem >= VCPU_RAM_OFFSET && *mem < VCPU_RAM_OFFSET + VCPU_RAM_SIZE)
+    readonly_((((uint8_t*) mem) - cpu->memory_) >= VCPU_RAM_OFFSET && (((uint8_t*) mem) - cpu->memory_) < VCPU_RAM_OFFSET + VCPU_RAM_SIZE)
 {
 }
 

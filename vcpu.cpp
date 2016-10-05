@@ -10,7 +10,6 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     threadRunning_ = false;
     executionStoppedCallback_ = executionStoppedCallback;
     status_ = VCPU_STATUS_OK;
-    breakpointHit_ = false;
 
     FILE* file = fopen(romFile.c_str(), "r");
     if (!file)
@@ -48,8 +47,6 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     // TODO: add check initialized
 
     reset();
-
-    getPC() = VCPU_ROM_OFFSET;
 }
 
 Vcpu::~Vcpu()
@@ -65,9 +62,9 @@ VcpuStatus Vcpu::getStatus()
 
 void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
 {
-    assert(callback);
+    assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED);
     assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
-    assert(begin < end);
+    assert(begin <= end);
 
     for (std::string& instrName : instructionNames_)
     {
@@ -77,7 +74,7 @@ void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void*
     std::string* nameAddr = &instructionNames_[numInstructionNames_];
     numInstructionNames_++;
 
-    for (int i = begin; i < end; i++)
+    for (int i = begin; i <= end; i++)
     {
         assert(instructions_[i].type == VCPU_INSTR_TYPE_NOT_INITIALIZED);
 
@@ -89,58 +86,70 @@ void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void*
 
 std::string Vcpu::getRegisterName(unsigned n)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	assert(n < VCPU_NUM_REGISTERS);
 	return registerNames_[n];
 }
 
 uint16_t& Vcpu::getRegister(unsigned n)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	assert(n < VCPU_NUM_REGISTERS);
     return (uint16_t&) memory_[VCPU_MEM_SIZE + n * sizeof (uint16_t)];
 }
 
 uint16_t& Vcpu::getPC()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return getRegister(VCPU_PC_REGISTER);
 }
 
 uint16_t& Vcpu::getSP()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return getRegister(VCPU_SP_REGISTER);
 }
 
 uint8_t& Vcpu::getPSW()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return (uint8_t&) memory_[VCPU_FLAG_REGISTER_OFFSET];
 }
 
 unsigned Vcpu::getNRegisters()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	return VCPU_NUM_REGISTERS;
 }
 
 unsigned Vcpu::getDisplayWidth()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	return VCPU_DISPLAY_WIDTH;
 }
 
 unsigned Vcpu::getDisplayHeight()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	return VCPU_DISPLAY_HEIGHT;
 }
 
 void* Vcpu::getFramebuffer()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	return (void*) &memory_[VCPU_FB_OFFSET];
 }
 
 unsigned Vcpu::getMemSize()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return VCPU_MEM_SIZE;
 }
 
 std::string Vcpu::instrAtAddress(uint16_t address)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
+
     uint16_t instr = getMemoryWord_(address);
     uint16_t data1 = getMemoryWord_(address + sizeof (uint16_t));
     uint16_t data2 = getMemoryWord_(address + 2 * sizeof (uint16_t));
@@ -161,7 +170,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     {
         std::string r1 = getOperand_(instr, 0, data2);
         std::string r2 = getOperand_(instr, 6, data1);
-        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r1.c_str(), r2.c_str());
+        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r2.c_str(), r1.c_str());
     }
         break;
 
@@ -169,7 +178,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     {
         std::string r1 = getOperand_(instr, 0, data1);
         std::string r2 = getRegisterByInstr_(instr, 6);
-        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r2.c_str(), r1.c_str());
+        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r1.c_str(), r2.c_str());
     }
         break;
 
@@ -280,46 +289,56 @@ std::string Vcpu::getOperand_(uint16_t instr, int begin, uint16_t data)
 
 bool Vcpu::getNegativeFlag()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return GET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT);
 }
 
 void Vcpu::setNegativeFlag(bool flag)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     SET_BIT(getPSW(), VCPU_NEGATIVE_FLAG_BIT, flag);
 }
 
 bool Vcpu::getZeroFlag()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return GET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT);
 }
 
 void Vcpu::setZeroFlag(bool flag)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     SET_BIT(getPSW(), VCPU_ZERO_FLAG_BIT, flag);
 }
 
 bool Vcpu::getOverflowFlag()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return GET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT);
 }
 
 void Vcpu::setOverflowFlag(bool flag)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     SET_BIT(getPSW(), VCPU_OVERFLOW_FLAG_BIT, flag);
 }
 
 bool Vcpu::getCarryFlag()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return GET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT);
 }
 
 void Vcpu::setCarryFlag(bool flag)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     SET_BIT(getPSW(), VCPU_CARRY_FLAG_BIT, flag);
 }
 
 void Vcpu::start()
 {
+    assert(status_ == VCPU_STATUS_OK);
+
     breakpointHit_ = false;
     if (breakpointExists(getPC()))
         breakpointHit_ = true;
@@ -372,6 +391,8 @@ void Vcpu::threadFunc_()
 
 void Vcpu::reset()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
+
     if (threadState_ == VCPU_THREAD_STATE_RUNNING || threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
@@ -384,10 +405,18 @@ void Vcpu::reset()
             memory_[i] = 0;
     }
     // ^ it's resets all registers
+
+    getPC() = VCPU_ROM_OFFSET;
+    breakpointHit_ = false;
+    breakpoints_.clear();
+
+    status_ = VCPU_STATUS_OK;
 }
 
 void Vcpu::pause()
 {
+    assert(status_ == VCPU_STATUS_OK);
+
     if (threadState_ == VCPU_THREAD_STATE_RUNNING || threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
@@ -397,6 +426,8 @@ void Vcpu::pause()
 
 void Vcpu::step()
 {
+    assert(status_ == VCPU_STATUS_OK);
+
     if (threadState_ == VCPU_THREAD_STATE_IDLE)
     {
         threadRunning_ = true;
@@ -411,21 +442,25 @@ void Vcpu::step()
 
 void Vcpu::addBreakpoint(uint16_t address)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     breakpoints_.insert(address);
 }
 
 void Vcpu::removeBreakpoint(uint16_t address)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     breakpoints_.erase(address);
 }
 
 bool Vcpu::breakpointExists(uint16_t address)
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return breakpoints_.find(address) != breakpoints_.end();
 }
 
 bool Vcpu::breakpointHit()
 {
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return breakpointHit_;
 }
 
@@ -436,6 +471,7 @@ void Vcpu::executeInstruction_()
     if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
     {
         status_ = VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION;
+        threadState_ = VCPU_THREAD_STATE_IDLE;
         return;
     }
 
@@ -455,7 +491,8 @@ void Vcpu::executeInstruction_()
         MemRegion dstRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize), this);
         MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize), this);
 
-        ((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw);
+        if (!((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
+            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
         break;
 
@@ -463,8 +500,13 @@ void Vcpu::executeInstruction_()
     {
         MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
         MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
+        MemRegion reg2Region(&getAddrByAddrMode_(
+                                 (VCPU_GET_REG(instr, 6) % 2 == 0) ? (VCPU_GET_REG(instr, 6) + 1) : VCPU_GET_REG(instr, 6),
+                                 VCPU_ADDR_MODE_REGISTER, 2), this);
 
-        ((vcpu_instr_operand_register_callback*) instructions_[instr].callback)(regRegion, srcRegion, psw);
+        if (!((vcpu_instr_operand_register_callback*) instructions_[instr].callback)
+                ((VCPU_GET_REG(instr, 6) % 2 == 1), regRegion, reg2Region, srcRegion, psw))
+        status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
     break;
 
@@ -472,14 +514,16 @@ void Vcpu::executeInstruction_()
     {
         MemRegion region(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
 
-        ((vcpu_instr_single_operand_callback*) instructions_[instr].callback)(region, psw);
+        if (!((vcpu_instr_single_operand_callback*) instructions_[instr].callback)(region, psw))
+            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
     break;
 
     case VCPU_INSTR_TYPE_BRANCH:
     {
         uint8_t offset = (instr & 255);
-        ((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw);
+        if (!((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw))
+            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
     break;
 
@@ -496,7 +540,10 @@ void Vcpu::executeInstruction_()
     setCarryFlag(psw.c);
 
     if (status_ != VCPU_STATUS_OK)
+    {
         getPC() = prevPC;
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+    }
 }
 
 uint16_t& Vcpu::getMemoryWord_(uint16_t addr)
