@@ -1,14 +1,20 @@
 #include "screen.h"
 #include <QPaintEvent>
-#include <algorithm>
+#include <QPainter>
 
 Screen::Screen(const void* screenData, unsigned width, unsigned height, QWidget *parent) :
     QWidget(parent),
-    image_((const uchar*) screenData, width, height, QImage::Format_Grayscale8)
+    image_((const uchar*) screenData, width, height, QImage::Format_Grayscale8),
+    timer_()
 {
     QSize size(width, height);
     setMinimumSize(size);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    connect(&timer_, &QTimer::timeout, this, [this]()
+    {
+        update();
+    });
+    timer_.start(1000 / 60);
 }
 
 QSize Screen::sizeHint()
@@ -27,6 +33,4 @@ void Screen::paintEvent(QPaintEvent*)
     painter.setTransform(transform);
     painter.drawImage(0, 0, image_);
     painter.end();
-
-    update();
 }

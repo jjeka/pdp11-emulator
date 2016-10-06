@@ -41,6 +41,7 @@ private:
     bool isChildWidgetOfAnyLayout_(QLayout *layout, QWidget *widget);
     void setVcpuControlsToState_(bool running);
     void checkVcpuStatus_();
+    void createMenus_();
 
 Q_SIGNALS:
     void executionStopped();

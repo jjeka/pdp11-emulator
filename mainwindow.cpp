@@ -4,6 +4,7 @@
 #include "aspectratiowidget.h"
 #include <QThread>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #define FLAG_REGISTERS()        \
     FLAG_REGISTER(N, Negative)  \
@@ -61,6 +62,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     flagsLayout->addStretch();
     ui_->registersLayout->addRow("Flags", flagsLayout);
+
+    createMenus_();
 }
 
 void MainWindow::refreshCpuState_()
@@ -201,4 +204,26 @@ void MainWindow::show()
     QMainWindow::show();
 
     executionStopped_();
+}
+
+void MainWindow::createMenus_()
+{
+    QMenu* fileMenu = menuBar()->addMenu("&File");
+
+    QAction* openAct = new QAction("&Open RAM File", this);
+    openAct->setShortcuts(QKeySequence::Open);
+    connect(openAct, &QAction::triggered, this, [this]()
+    {
+        QString fileName = QFileDialog::getOpenFileName(this, "Open RAM file");
+        //vcpu_->reset(fileName);
+    });
+    fileMenu->addAction(openAct);
+
+    QAction* exitAct = new QAction("&Exit", this);
+    exitAct->setShortcuts(QKeySequence::Quit);
+    connect(exitAct, &QAction::triggered, this, [this]()
+    {
+        QApplication::quit();
+    });
+    fileMenu->addAction(exitAct);
 }
