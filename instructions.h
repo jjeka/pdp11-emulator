@@ -112,7 +112,7 @@ bool instr_ble(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 bool instr_bhi(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 bool instr_blos(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 
-// Condition code operations
+// Other
 bool instr_nop(uint16_t instr, Vcpu& cpu);
 bool instr_condition_code_operation(uint16_t instr, Vcpu& cpu);
 bool instr_halt(uint16_t instr, Vcpu& cpu);

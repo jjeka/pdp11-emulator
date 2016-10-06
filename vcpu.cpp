@@ -610,8 +610,10 @@ void Vcpu::executeInstruction_()
     if (status_ != VCPU_STATUS_OK)
     {
         getPC() = prevPC;
+        VcpuThreadState prevThreadState = threadState_;
         threadState_ = VCPU_THREAD_STATE_IDLE;
-        executionStoppedCallback_();
+        if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+            executionStoppedCallback_();
     }
 }
 
@@ -675,6 +677,8 @@ uint16_t& Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
 void Vcpu::onHalt_()
 {
     haltHit_ = true;
+    VcpuThreadState prevThreadState = threadState_;
     threadState_ = VCPU_THREAD_STATE_IDLE;
-    executionStoppedCallback_();
+    if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+        executionStoppedCallback_();
 }
