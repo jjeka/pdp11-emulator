@@ -210,11 +210,11 @@ void MainWindow::createMenus_()
 {
     QMenu* fileMenu = menuBar()->addMenu("&File");
 
-    QAction* openAct = new QAction("&Open RAM File", this);
+    QAction* openAct = new QAction("&Open ROM File", this);
     openAct->setShortcuts(QKeySequence::Open);
     connect(openAct, &QAction::triggered, this, [this]()
     {
-        QString fileName = QFileDialog::getOpenFileName(this, "Open RAM file");
+        QString fileName = QFileDialog::getOpenFileName(this, "Open ROM file");
         vcpu_->reset(fileName.toStdString());
     });
     fileMenu->addAction(openAct);
@@ -226,4 +226,14 @@ void MainWindow::createMenus_()
         QApplication::quit();
     });
     fileMenu->addAction(exitAct);
+
+    QAction* aboutAct = new QAction("&About", this);
+    aboutAct->setShortcuts(QKeySequence::HelpContents);
+    connect(aboutAct, &QAction::triggered, this, [this]()
+    {
+        QMessageBox::about(this, "About PDP 11 emulator",
+                                 "Authors: Nikitenko Evgeny & Ivanov Alexey<br>"
+                                 "Github: <a href='https://github.com/jjeka/pdp11-emulator'>github.com/jjeka/pdp11-emulator</a>");
+    });
+    menuBar()->addAction(aboutAct);
 }
