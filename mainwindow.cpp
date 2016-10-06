@@ -68,7 +68,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::refreshCpuState_()
 {
-    //ui_->disasView->setCurrentIndex(disasModel_.index(353451, 0));
     for (unsigned i = 0; i < vcpu_->getNRegisters(); i++)
         registerValues_[i]->setText(QString().sprintf("%.8o", (unsigned) vcpu_->getRegister(i)));
 
