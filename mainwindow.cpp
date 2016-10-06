@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QtWidgets/QLabel>
 #include "aspectratiowidget.h"
+#include <QThread>
+#include <QMessageBox>
 
 #define FLAG_REGISTERS()        \
     FLAG_REGISTER(N, Negative)  \
@@ -17,10 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
     screen_(new Screen(vcpu_->getFramebuffer(), vcpu_->getDisplayWidth(), vcpu_->getDisplayHeight())),
     disasModel_(new DisasModel(vcpu_))
 {
-    connect(this, &MainWindow::executionStopped, []()
-    {
-        while (1) ;
-    });
+    connect(this, &MainWindow::executionStopped, this, &MainWindow::executionStopped_);
 
     ui_->setupUi(this);
     ui_->stateLayout->insertWidget(0, new AspectRatioWidget(screen_, screen_->sizeHint().width(), screen_->sizeHint().height()));
@@ -62,9 +61,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     flagsLayout->addStretch();
     ui_->registersLayout->addRow("Flags", flagsLayout);
-
-    refreshCpuState_();
-    setVcpuControlsToState_(false);
 }
 
 void MainWindow::refreshCpuState_()
@@ -75,7 +71,7 @@ void MainWindow::refreshCpuState_()
 
     disasModel_->reload();
 
-    ui_->disasView->scrollTo(disasModel_->index(vcpu_->getPC() / sizeof (uint16_t)));
+    ui_->disasView->scrollTo(disasModel_->index(vcpu_->getPC() / sizeof (uint16_t)), QAbstractItemView::PositionAtTop);
 
     #define FLAG_REGISTER(name, fullname)                                               \
         flag##name##Register_->setText(flagString_(#name, vcpu_->get##fullname##Flag()));
@@ -141,28 +137,68 @@ void MainWindow::on_pauseButton_clicked()
 {
     vcpu_->pause();
 
-    setVcpuControlsToState_(false);
-    refreshCpuState_();
+    executionStopped_();
 }
 
 void MainWindow::on_resetButton_clicked()
 {
     vcpu_->reset();
+
+    executionStopped_();
 }
 
 void MainWindow::on_stepButton_clicked()
 {
     setVcpuControlsToState_(true);
+
     vcpu_->step();
-    setVcpuControlsToState_(false);
-    refreshCpuState_();
+
+    executionStopped_();
 }
 
 void MainWindow::setVcpuControlsToState_(bool running)
 {
     setEnabledWidgetsInLayout_(ui_->cpuLayout, !running);
-    ui_->startButton->setEnabled(!running);
-    ui_->stepButton->setEnabled(!running);
+    ui_->startButton->setEnabled(!running && vcpu_->getStatus() == VCPU_STATUS_OK);
+    ui_->stepButton->setEnabled(!running && vcpu_->getStatus() == VCPU_STATUS_OK);
 
     ui_->pauseButton->setEnabled(running);
+}
+
+void MainWindow::executionStopped_()
+{
+    checkVcpuStatus_();
+    setVcpuControlsToState_(false);
+    refreshCpuState_();
+}
+
+void MainWindow::checkVcpuStatus_()
+{
+    switch (vcpu_->getStatus())
+    {
+    case VCPU_STATUS_OK:
+        break;
+    case VCPU_STATUS_FAIL_OPEN_ROM:
+        QMessageBox::warning(this, "Warning", "Unable to load default ROM file. Select a ROM file in File->Open ROM.");
+        break;
+    case VCPU_STATUS_WRONG_ROM_SIZE:
+        QMessageBox::critical(this, "Error", "Error loading ROM file. Select a valid ROM file in File->Open ROM.");
+        break;
+    case VCPU_STATUS_WRITE_FROM_READONLY:
+        QMessageBox::critical(this, "Error", "Attempt to write into read-only memory. Unable to continue execution");
+        break;
+    case VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION:
+        QMessageBox::critical(this, "Error", "Attempt to execute an unimplemented instruction. Unable to continue execution");
+        break;
+    case VCPU_STATUS_INVALID_INSTRUCTION:
+        QMessageBox::critical(this, "Error", "Attempt to execute an invalid instruction. Unable to continue execution");
+        break;
+    }
+}
+
+void MainWindow::show()
+{
+    QMainWindow::show();
+
+    executionStopped_();
 }

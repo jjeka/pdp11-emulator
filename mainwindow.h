@@ -40,6 +40,7 @@ private:
     void setEnabledWidgetsInLayout_(QLayout *layout, bool enabled);
     bool isChildWidgetOfAnyLayout_(QLayout *layout, QWidget *widget);
     void setVcpuControlsToState_(bool running);
+    void checkVcpuStatus_();
 
 Q_SIGNALS:
     void executionStopped();
@@ -49,6 +50,12 @@ public Q_SLOTS:
     virtual void on_pauseButton_clicked();
     virtual void on_resetButton_clicked();
     virtual void on_stepButton_clicked();
+
+    virtual void show();
+
+private Q_SLOTS:
+    void executionStopped_();
+
 
 };
 
