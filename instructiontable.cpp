@@ -63,29 +63,43 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0103000, 0103377, "bcc/bhis", (void*) instr_bcc, VCPU_INSTR_TYPE_BRANCH },
     { 0103400, 0103777, "bcs/blo" , (void*) instr_bcs, VCPU_INSTR_TYPE_BRANCH },
 
-    // subroutine
+    { 0000240, 0000240, "nop"    , (void*) instr_nop, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000260, 0000260, "nop (2)", (void*) instr_nop, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000241, 0000241, "clc", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000242, 0000242, "clv", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000244, 0000244, "clz", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000250, 0000250, "cln", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000261, 0000261, "sec", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000262, 0000262, "sev", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000264, 0000264, "sez", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000270, 0000270, "sen", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000257, 0000257, "ccc", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000277, 0000277, "scc", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000243, 0000243, "CCO (1)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000245, 0000247, "CCO (2)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000251, 0000256, "CCO (3)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000263, 0000263, "CCO (4)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000265, 0000267, "CCO (5)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+    { 0000271, 0000276, "CCO (6)", (void*) instr_condition_code_operation, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+
     { 0000100, 0000177, "jmp" , NULL, VCPU_INSTR_TYPE_SINGLE_OPERAND }, // TODO: implement all
     { 0004000, 0004777, "jsr" , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER  },
     { 0000200, 0000207, "rts" , NULL, VCPU_INSTR_TYPE_REGISTER  },
     { 0006400, 0006477, "mark", NULL, VCPU_INSTR_TYPE_SINGLE_OPERAND },
     { 0077000, 0077777, "sob" , NULL, VCPU_INSTR_TYPE_OPERAND_REGISTER },
 
-    // interrupts
+    { 0000000, 0000000, "halt" , (void*) instr_halt, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
+
+    { 0000001, 0000001, "wait" , NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
     { 0000002, 0000002, "rti", NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
     { 0000006, 0000006, "rtt", NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
 
-    // other
-    { 0000000, 0000000, "halt" , NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
-    { 0000001, 0000001, "wait" , NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
-    { 0000005, 0000005, "reset", NULL, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS },
-
-    { 0000240, 0000277, "condition code operations", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
-
     // Not implemented:
-    { 0104000, 0104377, "emp" , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
-    { 0104400, 0104777, "trap", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
-    { 0000003, 0000003, "bpt" , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
-    { 0000004, 0000004, "iot" , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
+    { 0104000, 0104377, "emp"  , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
+    { 0104400, 0104777, "trap" , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
+    { 0000003, 0000003, "bpt"  , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
+    { 0000004, 0000004, "iot"  , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
+    { 0000005, 0000005, "reset", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
 
     { 0075000, 0075777, "floating-point operations (1)", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
     { 0170000, 0177777, "floating-point operations (2)", NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
@@ -100,10 +114,11 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0006600, 0006677, "mtpi"  , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
     { 0106600, 0106677, "mtpd"  , NULL, VCPU_INSTR_TYPE_NOT_IMPLEMENTED },
 
+    // Invalid opcode:
     { 0000010, 0000077, "", NULL, VCPU_INSTR_TYPE_INVALID_OPCODE },
     { 0000210, 0000227, "", NULL, VCPU_INSTR_TYPE_INVALID_OPCODE },
     { 0007000, 0007777, "", NULL, VCPU_INSTR_TYPE_INVALID_OPCODE },
-    { 0107000, 0107777, "", NULL, VCPU_INSTR_TYPE_INVALID_OPCODE },
+    { 0107000, 0107777, "", NULL, VCPU_INSTR_TYPE_INVALID_OPCODE }
 };
 
 int VCPU_NUM_INSTRUCTIONS_IN_TABLE = sizeof (VCPU_INSTRUCTIONS) / sizeof(InstructionInfo);

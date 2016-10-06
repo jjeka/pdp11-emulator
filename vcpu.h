@@ -97,6 +97,7 @@ public:
     void removeBreakpoint(uint16_t address);
     bool breakpointExists(uint16_t address);
     bool breakpointHit();
+    bool haltHit();
 
     bool getNegativeFlag();
     void setNegativeFlag(bool flag);
@@ -140,6 +141,7 @@ private:
     VcpuThreadState threadState_;
     bool threadRunning_;
     bool breakpointHit_;
+    bool haltHit_;
 
     void threadFunc_();
     void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type);
@@ -149,7 +151,10 @@ private:
     uint16_t& getMemoryWord_(uint16_t addr);
     uint16_t& getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
 
+    void onHalt_();
+
     friend class MemRegion;
+    friend bool instr_halt(uint16_t instr, Vcpu& cpu);
 };
 
 #endif // VCPU_H

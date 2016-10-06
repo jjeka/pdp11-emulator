@@ -41,6 +41,7 @@ struct VcpuPSW
 typedef bool vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 typedef bool vcpu_instr_operand_register_callback(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
 typedef bool vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
+typedef bool vcpu_instr_without_parameters_callback(uint16_t instr, Vcpu& cpu);
 typedef bool vcpu_instr_branch_callback(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
@@ -110,5 +111,10 @@ bool instr_bgt(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 bool instr_ble(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 bool instr_bhi(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 bool instr_blos(uint16_t& pc, int8_t offset, VcpuPSW& psw);
+
+// Condition code operations
+bool instr_nop(uint16_t instr, Vcpu& cpu);
+bool instr_condition_code_operation(uint16_t instr, Vcpu& cpu);
+bool instr_halt(uint16_t instr, Vcpu& cpu);
 
 #endif // INSTRUCTIONS_H

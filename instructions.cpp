@@ -1,4 +1,5 @@
 #include "instructions.h"
+#include "vcpu.h"
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
 
@@ -720,5 +721,46 @@ bool instr_blos(uint16_t& pc, int8_t offset, VcpuPSW& psw)
 {
     if (psw.c || psw.z)
         pc = pc + int16_t(offset) * 2;
+    return true;
+}
+
+// Other
+
+bool instr_nop(uint16_t /*instr*/, Vcpu& /*cpu*/)
+{
+    return true;
+}
+
+bool instr_condition_code_operation(uint16_t instr, Vcpu& cpu)
+{
+    if (instr & 10)
+    {
+        if (instr & 1)
+            cpu.setCarryFlag(true);
+        if (instr & 2)
+            cpu.setOverflowFlag(true);
+        if (instr & 4)
+            cpu.setZeroFlag(true);
+        if (instr & 8)
+            cpu.setNegativeFlag(true);
+    }
+    else
+    {
+        if (instr & 1)
+            cpu.setCarryFlag(false);
+        if (instr & 2)
+            cpu.setOverflowFlag(false);
+        if (instr & 4)
+            cpu.setZeroFlag(false);
+        if (instr & 8)
+            cpu.setNegativeFlag(false);
+    }
+
+    return true;
+}
+
+bool instr_halt(uint16_t /*instr*/, Vcpu& cpu)
+{
+    cpu.onHalt_();
     return true;
 }

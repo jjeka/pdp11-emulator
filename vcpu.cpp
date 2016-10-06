@@ -509,8 +509,16 @@ bool Vcpu::breakpointHit()
     return breakpointHit_;
 }
 
+bool Vcpu::haltHit()
+{
+    assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
+    return haltHit_;
+}
+
 void Vcpu::executeInstruction_()
 {
+    haltHit_ = false;
+
     uint16_t instr = getMemoryWord_(getPC());
 
     if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
@@ -570,6 +578,14 @@ void Vcpu::executeInstruction_()
     }
     break;
 
+    // TODO: case VCPU_INSTR_TYPE_REGISTER
+    case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS:
+    {
+        if (!((vcpu_instr_without_parameters_callback*) instructions_[instr].callback)(instr, *this))
+            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+    }
+    break;
+
     case VCPU_INSTR_TYPE_BRANCH:
     {
         int8_t offset = (instr & 255);
@@ -577,8 +593,6 @@ void Vcpu::executeInstruction_()
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
     break;
-
-    // TODO: case VCPU_INSTR_TYPE_REGISTER, case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS
 
     case VCPU_INSTR_TYPE_NOT_INITIALIZED:
     case VCPU_INSTR_TYPE_NOT_IMPLEMENTED:
@@ -597,6 +611,7 @@ void Vcpu::executeInstruction_()
     {
         getPC() = prevPC;
         threadState_ = VCPU_THREAD_STATE_IDLE;
+        executionStoppedCallback_();
     }
 }
 
@@ -655,4 +670,11 @@ uint16_t& Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
     }
 
     return *addr;
+}
+
+void Vcpu::onHalt_()
+{
+    haltHit_ = true;
+    threadState_ = VCPU_THREAD_STATE_IDLE;
+    executionStoppedCallback_();
 }
