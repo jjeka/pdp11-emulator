@@ -26,7 +26,11 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
                         VCPU_INSTRUCTIONS[i].callback,
                         VCPU_INSTRUCTIONS[i].type);
 
-    // TODO: add check initialized
+    for (int i = 0; i < VCPU_NUM_INSTRUCTIONS; i++)
+    {
+        if (instructions_[i].type == VCPU_INSTR_TYPE_NOT_INITIALIZED)
+            abort();
+    }
 
     reset(romFile);
 }
@@ -44,17 +48,23 @@ VcpuStatus Vcpu::getStatus()
 
 void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
 {
-    //assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED); TODO: fix
-    //assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
+    //assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED); // TODO: fix
+    assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
     assert(begin <= end);
 
-    for (std::string& instrName : instructionNames_)
+    std::string* nameAddr;
+    if (type != VCPU_INSTR_TYPE_INVALID_OPCODE)
     {
-        assert(name != instrName);
+        for (std::string& instrName : instructionNames_)
+            assert(name != instrName);
+
+        instructionNames_[numInstructionNames_] = name;
+        nameAddr = &instructionNames_[numInstructionNames_];
+
+        numInstructionNames_++;
     }
-    instructionNames_[numInstructionNames_] = name;
-    std::string* nameAddr = &instructionNames_[numInstructionNames_];
-    numInstructionNames_++;
+    else
+        nameAddr = NULL;
 
     for (int i = begin; i <= end; i++)
     {
@@ -140,12 +150,12 @@ std::string Vcpu::instrAtAddress(uint16_t address)
 
     switch (instructions_[instr].type)
     {
-    case VCPU_INSTR_TYPE_NOT_INITIALIZED:
-        sprintf(name, "[not initialized: 0x%X]", instr);
-        break;
-
     case VCPU_INSTR_TYPE_NOT_IMPLEMENTED:
         sprintf(name, "[not implemented: 0x%X]", instr);
+        break;
+
+    case VCPU_INSTR_TYPE_INVALID_OPCODE:
+        sprintf(name, "[invalid opcode: 0x%X]", instr);
         break;
 
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
@@ -186,6 +196,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
         sprintf(name, "%s", instructions_[instr].name->c_str());
         break;
 
+    case VCPU_INSTR_TYPE_NOT_INITIALIZED:
     default:
         abort();
         break;
@@ -484,10 +495,15 @@ void Vcpu::executeInstruction_()
 {
     uint16_t instr = getMemoryWord_(getPC());
 
-    if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED ||
-        instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED) // TODO: remove
+    if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
     {
         status_ = VCPU_STATUS_NOT_IMPLEMENTED_INSTRUCTION;
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+        return;
+    }
+    if (instructions_[instr].type == VCPU_INSTR_TYPE_INVALID_OPCODE)
+    {
+        status_ = VCPU_STATUS_INVALID_OPCODE;
         threadState_ = VCPU_THREAD_STATE_IDLE;
         return;
     }
@@ -544,8 +560,11 @@ void Vcpu::executeInstruction_()
     }
     break;
 
-        // TODO: other types (jump, SUBROUTINE), halt, wait, reset, nop, spl, mfpi, mtpi, mfpd, mtpd, Condition Code Operator
+    // TODO: case VCPU_INSTR_TYPE_REGISTER, case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS
 
+    case VCPU_INSTR_TYPE_NOT_INITIALIZED:
+    case VCPU_INSTR_TYPE_NOT_IMPLEMENTED:
+    case VCPU_INSTR_TYPE_INVALID_OPCODE:
     default:
         abort();
         break;
