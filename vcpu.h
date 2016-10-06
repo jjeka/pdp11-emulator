@@ -84,6 +84,7 @@ public:
     std::string instrAtAddress(uint16_t address);
     void start();
     void reset();
+    void reset(std::string romFile);
     void pause();
     void step();
 

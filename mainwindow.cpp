@@ -215,7 +215,7 @@ void MainWindow::createMenus_()
     connect(openAct, &QAction::triggered, this, [this]()
     {
         QString fileName = QFileDialog::getOpenFileName(this, "Open RAM file");
-        //vcpu_->reset(fileName);
+        vcpu_->reset(fileName.toStdString());
     });
     fileMenu->addAction(openAct);
 

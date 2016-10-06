@@ -11,24 +11,6 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     executionStoppedCallback_ = executionStoppedCallback;
     status_ = VCPU_STATUS_OK;
 
-    FILE* file = fopen(romFile.c_str(), "rb");
-    if (!file)
-    {
-        status_ = VCPU_STATUS_FAIL_OPEN_ROM;
-        return;
-    }
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    if (size != VCPU_ROM_SIZE)
-    {
-        status_ = VCPU_STATUS_WRONG_ROM_SIZE;
-        fclose(file);
-        return;
-    }
-    fseek(file, 0, SEEK_SET);
-    fread(&memory_[VCPU_ROM_OFFSET], 1, VCPU_ROM_SIZE, file);
-    fclose(file);
-
     for (Instruction& instr : instructions_)
     {
         instr.callback = NULL;
@@ -46,7 +28,7 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
 
     // TODO: add check initialized
 
-    reset();
+    reset(romFile);
 }
 
 Vcpu::~Vcpu()
@@ -398,6 +380,29 @@ void Vcpu::threadFunc_()
         }
         threadRunning_ = false;
     }
+}
+
+void Vcpu::reset(std::string romFile)
+{
+    reset();
+
+    FILE* file = fopen(romFile.c_str(), "rb");
+    if (!file)
+    {
+        status_ = VCPU_STATUS_FAIL_OPEN_ROM;
+        return;
+    }
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    if (size != VCPU_ROM_SIZE)
+    {
+        status_ = VCPU_STATUS_WRONG_ROM_SIZE;
+        fclose(file);
+        return;
+    }
+    fseek(file, 0, SEEK_SET);
+    fread(&memory_[VCPU_ROM_OFFSET], 1, VCPU_ROM_SIZE, file);
+    fclose(file);
 }
 
 void Vcpu::reset()
