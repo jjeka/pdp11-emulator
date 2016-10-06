@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "instructions.h"
+#include "keycodes.h"
 
 #define VCPU_SP_REGISTER            6
 #define VCPU_PC_REGISTER            7
@@ -88,6 +89,9 @@ public:
     void reset(std::string romFile);
     void pause();
     void step();
+
+    void keyPressed(VcpuKeyCode keycode, bool shift, bool ctrl);
+    void keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl);
 
     void addBreakpoint(uint16_t address);
     void removeBreakpoint(uint16_t address);

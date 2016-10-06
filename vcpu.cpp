@@ -467,6 +467,24 @@ void Vcpu::step()
     }
 }
 
+void Vcpu::keyPressed(VcpuKeyCode keycode, bool shift, bool ctrl)
+{
+    assert(status_ == VCPU_STATUS_OK);
+    assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
+    assert(keycode != VCPU_KEYCODE_SHIFT || shift);
+
+    // TODO: implement
+}
+
+void Vcpu::keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl)
+{
+    assert(status_ == VCPU_STATUS_OK);
+    assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
+    assert(keycode != VCPU_KEYCODE_SHIFT || shift);
+
+    // TODO: implement
+}
+
 void Vcpu::addBreakpoint(uint16_t address)
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);

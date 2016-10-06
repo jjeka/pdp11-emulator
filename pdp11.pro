@@ -34,7 +34,8 @@ HEADERS  += mainwindow.h \
     aspectratiowidget.h \
     instructions.h \
     utils.h \
-    memregion.h
+    memregion.h \
+    keycodes.h
     instructions.h
 
 FORMS    += mainwindow.ui
