@@ -62,8 +62,8 @@ VcpuStatus Vcpu::getStatus()
 
 void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
 {
-    assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED);
-    assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
+    //assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED); TODO: fix
+    //assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
     assert(begin <= end);
 
     for (std::string& instrName : instructionNames_)
@@ -189,8 +189,19 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     }
         break;
 
+    case VCPU_INSTR_TYPE_REGISTER:
+    {
+        std::string r = getRegisterByInstr_(instr, 0);
+        sprintf(name, "%s %s", instructions_[instr].name->c_str(), r.c_str());
+    }
+        break;
+
     case VCPU_INSTR_TYPE_BRANCH:
         sprintf(name, "%s %X", instructions_[instr].name->c_str(), instr & 256);
+        break;
+
+    case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS:
+        sprintf(name, "%s", instructions_[instr].name->c_str());
         break;
 
     default:
@@ -522,7 +533,7 @@ void Vcpu::executeInstruction_()
 
     case VCPU_INSTR_TYPE_BRANCH:
     {
-        uint8_t offset = (instr & 255);
+        int8_t offset = (instr & 255);
         if (!((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }

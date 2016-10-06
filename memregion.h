@@ -21,6 +21,7 @@ private:
     uint16_t* mem_;
     Vcpu* cpu_;
     bool readonly_;
+    bool wordReadError_;
 
 };
 
