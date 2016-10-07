@@ -1,7 +1,7 @@
 #include "vcpu.h"
 
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
-    registerNames_ { "R1", "R2", "R3", "R4", "R5", "R6", "SP", "PC" },
+    registerNames_ { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" },
     thread_(std::bind(&Vcpu::threadFunc_, this))
 {
     assert(VCPU_RAM_SIZE > 0);
@@ -177,13 +177,6 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     case VCPU_INSTR_TYPE_SINGLE_OPERAND:
     {
         std::string r = getOperand_(instr, 0, data1);
-        sprintf(name, "%s %s", instructions_[instr].name->c_str(), r.c_str());
-    }
-        break;
-
-    case VCPU_INSTR_TYPE_REGISTER:
-    {
-        std::string r = getRegisterByInstr_(instr, 0);
         sprintf(name, "%s %s", instructions_[instr].name->c_str(), r.c_str());
     }
         break;
@@ -578,7 +571,7 @@ void Vcpu::executeInstruction_()
     }
     break;
 
-    // TODO: case VCPU_INSTR_TYPE_REGISTER
+        // TODO: register pos odd
     case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS:
     {
         if (!((vcpu_instr_without_parameters_callback*) instructions_[instr].callback)(instr, *this))
@@ -607,6 +600,15 @@ void Vcpu::executeInstruction_()
     setOverflowFlag(psw.v);
     setCarryFlag(psw.c);
 
+    if (getPC() % sizeof (uint16_t) != 0)
+    {
+        status_ = VCPU_STATUS_INVALID_PC;
+        getPC() = prevPC;
+        VcpuThreadState prevThreadState = threadState_;
+        threadState_ = VCPU_THREAD_STATE_IDLE;
+        if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
+            executionStoppedCallback_();
+    }
     if (status_ != VCPU_STATUS_OK)
     {
         getPC() = prevPC;
