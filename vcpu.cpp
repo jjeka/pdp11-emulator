@@ -142,7 +142,7 @@ void Vcpu::toOctal_(uint16_t n, char* str)
 {
     if (int16_t(n) > 0)
         sprintf(str, "0%o", unsigned(n));
-    else if (int16_t(n) > 0)
+    else if (int16_t(n) == 0)
         sprintf(str, "0");
     else
         sprintf(str, "-0%o", -unsigned(int16_t(n)));
@@ -162,7 +162,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     switch (instructions_[instr].type)
     {
     case VCPU_INSTR_TYPE_NOT_IMPLEMENTED:
-        sprintf(name, "[not implemented]");
+        sprintf(name, "[not implemented: %s]", instructions_[instr].name->c_str());
         break;
 
     case VCPU_INSTR_TYPE_INVALID_OPCODE:
@@ -196,7 +196,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
         break;
 
     case VCPU_INSTR_TYPE_BRANCH:
-        toOctal_(int16_t(instr & 255), temp);
+        toOctal_(int16_t(int8_t(instr & 255)) * 2 + 2, temp);
         sprintf(name, "%s %s", instructions_[instr].name->c_str(), temp);
         break;
 

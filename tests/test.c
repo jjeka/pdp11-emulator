@@ -1,6 +1,6 @@
-#define BEGIN() asm volatile("mov $0177774, sp\nmov $0177774, r5\nnop");
+#define BEGIN() asm volatile("mov $0177774, sp\nmov $0177774, r5");
 #define END() 										\
-	int __end = 2;									\
+	int __end = 0;									\
 	asm volatile("halt");							\
 	asm volatile("mov %0, r4\nhalt" :: "r"(__end));
 
@@ -25,10 +25,9 @@ void _start()
 			int y;
 			for (y = 0; y < 100; y++)
 			{
-				//*(addr + (y * 100 + x)) = t * ((50 - x) * (50 - x) + (50 - y) * (50 - y));
-				int a = t * ((50 - x) * (50 - x) + (50 - y) * (50 - y))%255;
-				int b = t * ((50 - x) * (50 - x) + (50 - y) * (50 - y))/255;
-				*(vram + (y * 100 + x)) = (b%2) ? a : (255-a);
+				int a = t * ((50 - x) * (50 - x) + (50 - y) * (50 - y)) % 255;
+				int b = t * ((50 - x) * (50 - x) + (50 - y) * (50 - y)) / 255;
+				*(vram + (y * 100 + x)) = (b%2) ? a : (255 - a);
 			}
 		}
 
