@@ -8,7 +8,7 @@ DisasModel::DisasModel(Vcpu* vcpu) :
 
 void DisasModel::reload()
 {
-    emit dataChanged(index(0), index( vcpu_->getMemSize() / sizeof(uint16_t) - 1));
+    emit dataChanged(index(0), index(vcpu_->getMemSize() / sizeof(uint16_t) - 1));
 }
 
 int DisasModel::rowCount(const QModelIndex&) const
@@ -26,7 +26,8 @@ QVariant DisasModel::data(const QModelIndex &index, int role) const
     switch (role)
     {
     case  Qt::DisplayRole:
-        return QString().sprintf("0x%.4x: %s", unsigned(addr), vcpu_->instrAtAddress(addr).c_str());
+        return QString().sprintf("%.6o: %.6o %s", unsigned(addr),
+                                 unsigned(vcpu_->getWordAtAddress(addr)), vcpu_->instrAtAddress(addr).c_str());
     case Qt::CheckStateRole:
         return vcpu_->breakpointExists(addr) ? Qt::Checked : Qt::Unchecked;
     case Qt::BackgroundColorRole:
@@ -55,7 +56,6 @@ bool DisasModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
     if (role == Qt::CheckStateRole)
     {
-        fprintf(stderr, "%s %d\n", value.typeName(), value.toInt());
         if (value == Qt::Checked)
             vcpu_->addBreakpoint(address);
         else
