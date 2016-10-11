@@ -231,6 +231,7 @@ void MainWindow::createMenus_()
     connect(aboutAct, &QAction::triggered, this, [this]()
     {
         QMessageBox::about(this, "About PDP 11 emulator",
+                                 "Version " APP_VERSION "<br>"
                                  "Authors: Nikitenko Evgeny & Ivanov Alexey<br>"
                                  "Github: <a href='https://github.com/jjeka/pdp11-emulator'>github.com/jjeka/pdp11-emulator</a>");
     });

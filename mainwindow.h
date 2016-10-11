@@ -11,6 +11,8 @@
 #include <QStandardItem>
 #include <clickablelabel.h>
 
+#define APP_VERSION "1.0"
+
 namespace Ui {
 class MainWindow;
 }
