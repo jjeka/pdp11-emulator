@@ -1,7 +1,7 @@
 #include "vcpu.h"
 
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
-    registerNames_ { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" },
+    registerNames_ { "r0", "r1", "r2", "r3", "r4", "r5", "sp", "pc" },
     thread_(std::bind(&Vcpu::threadFunc_, this))
 {
     assert(VCPU_RAM_SIZE > 0);
@@ -138,51 +138,66 @@ unsigned Vcpu::getMemSize()
     return VCPU_MEM_SIZE;
 }
 
+void Vcpu::toOctal_(uint16_t n, char* str)
+{
+    if (int16_t(n) > 0)
+        sprintf(str, "0%o", unsigned(n));
+    else if (int16_t(n) > 0)
+        sprintf(str, "0");
+    else
+        sprintf(str, "-0%o", -unsigned(int16_t(n)));
+}
+
 std::string Vcpu::instrAtAddress(uint16_t address)
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 
-    uint16_t instr = getMemoryWord_(address);
-    uint16_t data1 = getMemoryWord_(address + sizeof (uint16_t));
-    uint16_t data2 = getMemoryWord_(address + 2 * sizeof (uint16_t));
+    uint16_t instr = getWordAtAddress(address);
+    uint16_t data1 = getWordAtAddress(address + sizeof (uint16_t));
+    uint16_t data2 = getWordAtAddress(address + 2 * sizeof (uint16_t));
 
     char name[VCPU_INSTRUCTION_NAME_SIZE] = "";
+    char temp[VCPU_INSTRUCTION_NAME_SIZE] = "";
 
     switch (instructions_[instr].type)
     {
     case VCPU_INSTR_TYPE_NOT_IMPLEMENTED:
-        sprintf(name, "[not implemented: 0x%X]", instr);
+        sprintf(name, "[not implemented]");
         break;
 
     case VCPU_INSTR_TYPE_INVALID_OPCODE:
-        sprintf(name, "[invalid opcode: 0x%X]", instr);
+        sprintf(name, "[invalid opcode]");
         break;
 
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
     {
-        std::string r1 = getOperand_(instr, 0, data2);
-        std::string r2 = getOperand_(instr, 6, data1);
-        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r2.c_str(), r1.c_str());
+        bool dataNeeded = false;
+
+        std::string r2 = getOperand_(address, instr, 6, data1, &dataNeeded);
+        std::string r1 = getOperand_(address, instr, 0, dataNeeded ? data2 : data1);
+        sprintf(name, "%s %s, %s", instructions_[instr].name->c_str(), r2.c_str(), r1.c_str());
     }
         break;
 
     case VCPU_INSTR_TYPE_OPERAND_REGISTER:
     {
-        std::string r1 = getOperand_(instr, 0, data1);
+        std::string r1 = getOperand_(address, instr, 0, data1);
         std::string r2 = getRegisterByInstr_(instr, 6);
-        sprintf(name, "%s %s %s", instructions_[instr].name->c_str(), r1.c_str(), r2.c_str());
+        sprintf(name, "%s %s, %s", instructions_[instr].name->c_str(), r1.c_str(), r2.c_str());
     }
         break;
 
     case VCPU_INSTR_TYPE_SINGLE_OPERAND:
+    case VCPU_INSTR_TYPE_SINGLE_OPERAND_EX:
     {
-        std::string r = getOperand_(instr, 0, data1);
+        std::string r = getOperand_(address, instr, 0, data1);
         sprintf(name, "%s %s", instructions_[instr].name->c_str(), r.c_str());
     }
         break;
 
     case VCPU_INSTR_TYPE_BRANCH:
-        sprintf(name, "%s %X", instructions_[instr].name->c_str(), instr & 256);
+        toOctal_(int16_t(instr & 255), temp);
+        sprintf(name, "%s %s", instructions_[instr].name->c_str(), temp);
         break;
 
     case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS:
@@ -203,12 +218,13 @@ std::string Vcpu::getRegisterByInstr_(uint16_t instr, int begin)
     return registerNames_[r];
 }
 
-std::string Vcpu::getOperand_(uint16_t instr, int begin, uint16_t data)
+std::string Vcpu::getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded)
 {
     int r = (instr >> begin) & 7;
     int mode = (instr >> (begin + 3)) & 7;
 
     char result[VCPU_INSTRUCTION_NAME_SIZE] = "";
+    char temp[VCPU_INSTRUCTION_NAME_SIZE] = "";
     if (r != VCPU_PC_REGISTER || (r == VCPU_PC_REGISTER &&
                                   (mode != VCPU_ADDR_MODE_AUTOINCREMENT &&
                                    mode != VCPU_ADDR_MODE_AUTOINCREMENT_DEFFERED &&
@@ -244,11 +260,17 @@ std::string Vcpu::getOperand_(uint16_t instr, int begin, uint16_t data)
             break;
 
         case VCPU_ADDR_MODE_INDEX:
-            sprintf(result, "%o(%s)", data, registerName);
+            toOctal_(data, temp);
+            sprintf(result, "%s(%s)", temp, registerName);
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         case VCPU_ADDR_MODE_INDEX_DEFERRED:
-            sprintf(result, "@%o(%s)", data, registerName);
+            toOctal_(data, temp);
+            sprintf(result, "@%s(%s)", temp, registerName);
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         default:
@@ -261,19 +283,29 @@ std::string Vcpu::getOperand_(uint16_t instr, int begin, uint16_t data)
         switch (mode)
         {
         case VCPU_ADDR_MODE_AUTOINCREMENT: // immediate
-            sprintf(result, "#%o", data);
+            toOctal_(data, temp);
+            sprintf(result, "$%s", temp);
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         case VCPU_ADDR_MODE_AUTOINCREMENT_DEFFERED: // absolute
-            sprintf(result, "@#%o", data);
+            toOctal_(data, temp);
+            sprintf(result, "@$%s", temp);
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         case VCPU_ADDR_MODE_INDEX: // relative
-            sprintf(result, "A (PC+%o)", data);
+            sprintf(result, "0%o", unsigned((uint16_t(pc + data + 2 * sizeof (uint16_t))))); // unsigned octal needed
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         case VCPU_ADDR_MODE_INDEX_DEFERRED: // relative deferred
-            sprintf(result, "@A (PC+%o)", data);
+            sprintf(result, "@0%o", unsigned((uint16_t(pc + data + 2 * sizeof (uint16_t))))); // unsigned octal needed
+            if (dataNeeded)
+                *dataNeeded = true;
             break;
 
         default:
@@ -365,6 +397,7 @@ void Vcpu::threadFunc_()
                         breakpointHit_ = true;
                         executionStoppedCallback_();
                         threadState_ = VCPU_THREAD_STATE_IDLE;
+                        break;
                     }
                 }
 
@@ -466,7 +499,7 @@ void Vcpu::keyPressed(VcpuKeyCode keycode, bool shift, bool ctrl)
     assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
     assert(keycode != VCPU_KEYCODE_SHIFT || shift);
 
-    // TODO: implement
+
 }
 
 void Vcpu::keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl)
@@ -475,7 +508,7 @@ void Vcpu::keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl)
     assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
     assert(keycode != VCPU_KEYCODE_SHIFT || shift);
 
-    // TODO: implement
+
 }
 
 void Vcpu::addBreakpoint(uint16_t address)
@@ -512,7 +545,7 @@ void Vcpu::executeInstruction_()
 {
     haltHit_ = false;
 
-    uint16_t instr = getMemoryWord_(getPC());
+    uint16_t instr = getWordAtAddress(getPC());
 
     if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
     {
@@ -540,8 +573,8 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
     {
         uint16_t incrementSize = (instr & (1 << 15)) ? 1 : 2;
-        MemRegion dstRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize), this);
-        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize), this);
+        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize), this);
+        MemRegion dstRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize), this);
 
         if (!((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
@@ -571,10 +604,10 @@ void Vcpu::executeInstruction_()
     }
     break;
 
-        // TODO: register pos odd
     case VCPU_INSTR_TYPE_WITHOUT_PARAMETERS:
+    case VCPU_INSTR_TYPE_SINGLE_OPERAND_EX:
     {
-        if (!((vcpu_instr_without_parameters_callback*) instructions_[instr].callback)(instr, *this))
+        if (!((vcpu_instr_without_parameters_and_ex_callback*) instructions_[instr].callback)(instr, *this))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }
     break;
@@ -604,22 +637,12 @@ void Vcpu::executeInstruction_()
     {
         status_ = VCPU_STATUS_INVALID_PC;
         getPC() = prevPC;
-        VcpuThreadState prevThreadState = threadState_;
-        threadState_ = VCPU_THREAD_STATE_IDLE;
-        if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            executionStoppedCallback_();
     }
-    if (status_ != VCPU_STATUS_OK)
-    {
+    else if (status_ != VCPU_STATUS_OK)
         getPC() = prevPC;
-        VcpuThreadState prevThreadState = threadState_;
-        threadState_ = VCPU_THREAD_STATE_IDLE;
-        if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            executionStoppedCallback_();
-    }
 }
 
-uint16_t& Vcpu::getMemoryWord_(uint16_t addr)
+uint16_t& Vcpu::getWordAtAddress(uint16_t addr)
 {
     return *((uint16_t*) &memory_[addr]);
 }
@@ -635,37 +658,43 @@ uint16_t& Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
         break;
 
     case VCPU_ADDR_MODE_REGISTER_DEFFERED:
-        addr = &getMemoryWord_(getRegister(r));
+        addr = &getWordAtAddress(getRegister(r));
         break;
 
     case VCPU_ADDR_MODE_AUTOINCREMENT:
-        addr = &getMemoryWord_(getRegister(r));
-        getRegister(r) += incrementSize;
+        addr = &getWordAtAddress(getRegister(r));
+        getRegister(r) += ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : incrementSize);
         break;
 
     case VCPU_ADDR_MODE_AUTOINCREMENT_DEFFERED:
-        addr = &getMemoryWord_(getRegister(r));
+        addr = &getWordAtAddress(getWordAtAddress(getRegister(r)));
         getRegister(r) += sizeof (uint16_t); // it's correct even for byte instructions
         break;
 
     case VCPU_ADDR_MODE_AUTODECREMENT:
-        addr = &getMemoryWord_(getRegister(r));
-        getRegister(r) -= incrementSize;
+        addr = &getWordAtAddress(getRegister(r));
+        getRegister(r) -= ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : incrementSize);
         break;
 
     case VCPU_ADDR_MODE_AUTODECREMENT_DEFFERED:
-        addr = &getMemoryWord_(getMemoryWord_(getRegister(r)));
+        addr = &getWordAtAddress(getWordAtAddress(getRegister(r)));
         getRegister(r) -= sizeof (uint16_t); // it's correct even for byte instructions
         break;
 
     case VCPU_ADDR_MODE_INDEX:
-        addr = &getMemoryWord_(getRegister(r) + *((uint16_t*) &getMemoryWord_(getPC())));
+    {
+        int pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
+        addr = &getWordAtAddress(getRegister(r) + pcIteration + getWordAtAddress(getPC()));
         getPC() += sizeof (uint16_t);
+    }
         break;
 
     case VCPU_ADDR_MODE_INDEX_DEFERRED:
-        addr = &getMemoryWord_(getMemoryWord_(getRegister(r) + *((uint16_t*) &getMemoryWord_(getPC()))));
+    {
+        int pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
+        addr = &getWordAtAddress(getWordAtAddress(getRegister(r) + pcIteration + getWordAtAddress(getPC())));
         getPC() += sizeof (uint16_t);
+    }
         break;
 
     default:
@@ -683,4 +712,51 @@ void Vcpu::onHalt_()
     threadState_ = VCPU_THREAD_STATE_IDLE;
     if (prevThreadState != VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
         executionStoppedCallback_();
+}
+
+bool Vcpu::onJmp_(int r, int mode)
+{
+    switch (mode)
+    {
+    case VCPU_ADDR_MODE_REGISTER:
+        return false;
+
+    case VCPU_ADDR_MODE_REGISTER_DEFFERED:
+        getPC() = getRegister(r);
+        break;
+
+    case VCPU_ADDR_MODE_AUTOINCREMENT:
+        getPC() = getRegister(r);
+        getRegister(r) += sizeof (uint16_t);
+        break;
+
+    case VCPU_ADDR_MODE_AUTOINCREMENT_DEFFERED:
+        getPC() = getWordAtAddress(getRegister(r));
+        getRegister(r) += sizeof (uint16_t);
+        break;
+
+    case VCPU_ADDR_MODE_AUTODECREMENT:
+        getPC() = getRegister(r);
+        getRegister(r) -= sizeof (uint16_t);
+        break;
+
+    case VCPU_ADDR_MODE_AUTODECREMENT_DEFFERED:
+        getPC() = getWordAtAddress(getRegister(r));
+        getRegister(r) -= sizeof (uint16_t);
+        break;
+
+    case VCPU_ADDR_MODE_INDEX:
+        getPC() = getRegister(r) + getWordAtAddress(getPC()) + sizeof (uint16_t);
+        break;
+
+    case VCPU_ADDR_MODE_INDEX_DEFERRED:
+        getPC() = getWordAtAddress(getRegister(r) + getWordAtAddress(getPC()) + sizeof (uint16_t));
+        break;
+
+    default:
+        abort();
+        break;
+    }
+
+    return true;
 }

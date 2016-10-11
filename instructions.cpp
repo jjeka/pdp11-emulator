@@ -764,3 +764,8 @@ bool instr_halt(uint16_t /*instr*/, Vcpu& cpu)
     cpu.onHalt_();
     return true;
 }
+
+bool instr_jmp(uint16_t instr, Vcpu& cpu)
+{
+    return cpu.onJmp_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+}

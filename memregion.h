@@ -11,6 +11,7 @@ public:
 
     MemRegion(uint16_t* mem, Vcpu* cpu);
     void operator = (uint16_t val);
+    void operator = (MemRegion& val);
     operator uint16_t();
 
     void set8(uint8_t val);

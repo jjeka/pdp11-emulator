@@ -14,6 +14,11 @@
 #include "instructions.h"
 #include "keycodes.h"
 
+// TODO: is bit instr fix for add/sub
+// TODO: step fix
+// TODO: pos fix
+// TODO: bss fix
+
 #define VCPU_SP_REGISTER            6
 #define VCPU_PC_REGISTER            7
 #define VCPU_NUM_REGISTERS          8
@@ -74,6 +79,7 @@ public:
 
     VcpuStatus getStatus();
 
+    uint16_t& getWordAtAddress(uint16_t addr);
     std::string getRegisterName(unsigned n);
     uint16_t& getRegister(unsigned n);
     uint16_t& getPC();
@@ -146,16 +152,18 @@ private:
 
     void threadFunc_();
     void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type);
-    std::string getOperand_(uint16_t instr, int begin, uint16_t data);
+    std::string getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded = NULL);
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();
-    uint16_t& getMemoryWord_(uint16_t addr);
     uint16_t& getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
+    void toOctal_(uint16_t n, char* str);
 
     void onHalt_();
+    bool onJmp_(int r, int mode);
 
     friend class MemRegion;
     friend bool instr_halt(uint16_t instr, Vcpu& cpu);
+    friend bool instr_jmp(uint16_t instr, Vcpu& cpu);
 };
 
 #endif // VCPU_H

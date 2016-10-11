@@ -4,7 +4,7 @@
 MemRegion::MemRegion(uint16_t* mem, Vcpu* cpu) :
     mem_(mem),
     cpu_(cpu),
-    readonly_((((uint8_t*) mem) - cpu->memory_) >= VCPU_RAM_OFFSET && (((uint8_t*) mem) - cpu->memory_) < VCPU_RAM_OFFSET + VCPU_RAM_SIZE),
+    readonly_((((uint8_t*) mem) - cpu->memory_) >= VCPU_ROM_OFFSET && (((uint8_t*) mem) - cpu->memory_) < VCPU_ROM_OFFSET + VCPU_ROM_SIZE),
     wordReadError_((((uint8_t*) mem) - cpu->memory_) == VCPU_MEM_SIZE - 1)
 {
 }
@@ -12,6 +12,11 @@ MemRegion::MemRegion(uint16_t* mem, Vcpu* cpu) :
 void MemRegion::operator = (uint16_t val)
 {
     set16(val);
+}
+
+void MemRegion::operator = (MemRegion& val)
+{
+    set16(uint16_t(val));
 }
 
 MemRegion::operator uint16_t()
