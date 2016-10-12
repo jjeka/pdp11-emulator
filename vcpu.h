@@ -14,7 +14,6 @@
 #include "instructions.h"
 #include "keycodes.h"
 
-// TODO: is bit instr fix for add/sub
 // TODO: step fix
 // TODO: pos fix
 // TODO: bss fix
@@ -155,6 +154,7 @@ private:
     std::string getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded = NULL);
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();
+    bool isByteInstruction_(uint16_t instr);
     uint16_t& getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
     void toOctal_(uint16_t n, char* str);
 
@@ -164,6 +164,7 @@ private:
     friend class MemRegion;
     friend bool instr_halt(uint16_t instr, Vcpu& cpu);
     friend bool instr_jmp(uint16_t instr, Vcpu& cpu);
+    friend bool instr_jsr(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
 };
 
 #endif // VCPU_H

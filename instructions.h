@@ -12,10 +12,14 @@ enum InstructionType
     VCPU_INSTR_TYPE_INVALID_OPCODE,
     VCPU_INSTR_TYPE_DOUBLE_OPERAND,
     VCPU_INSTR_TYPE_OPERAND_REGISTER,
+    VCPU_INSTR_TYPE_OPERAND_REGISTER_EX,
     VCPU_INSTR_TYPE_SINGLE_OPERAND,
+    VCPU_INSTR_TYPE_SINGLE_OPERAND_EX,
+    VCPU_INSTR_TYPE_SINGLE_REGISTER,
     VCPU_INSTR_TYPE_WITHOUT_PARAMETERS,
     VCPU_INSTR_TYPE_BRANCH,
-    VCPU_INSTR_TYPE_SINGLE_OPERAND_EX
+    VCPU_INSTR_TYPE_NUMBER,
+    VCPU_INSTR_TYPE_REGISTER_NUMBER,
 };
 
 struct InstructionInfo
@@ -40,9 +44,13 @@ struct VcpuPSW
 
 typedef bool vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
 typedef bool vcpu_instr_operand_register_callback(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+typedef bool vcpu_instr_operand_register_ex_callback(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
 typedef bool vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
+typedef bool vcpu_instr_single_register_callback(MemRegion& reg, Vcpu& cpu);
 typedef bool vcpu_instr_without_parameters_and_ex_callback(uint16_t instr, Vcpu& cpu);
 typedef bool vcpu_instr_branch_callback(uint16_t& pc, int8_t offset, VcpuPSW& psw);
+typedef bool vcpu_instr_number_callback(uint8_t n, Vcpu& cpu);
+typedef bool vcpu_instr_register_number_callback(MemRegion& reg, uint8_t n, Vcpu& cpu);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
 bool instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
@@ -117,5 +125,10 @@ bool instr_nop(uint16_t instr, Vcpu& cpu);
 bool instr_condition_code_operation(uint16_t instr, Vcpu& cpu);
 bool instr_halt(uint16_t instr, Vcpu& cpu);
 bool instr_jmp(uint16_t instr, Vcpu& cpu);
+
+bool instr_jsr(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
+bool instr_rts(MemRegion& reg, Vcpu& cpu);
+bool instr_mark(uint8_t n, Vcpu& cpu);
+bool instr_sob(MemRegion& reg, uint8_t n, Vcpu& cpu);
 
 #endif // INSTRUCTIONS_H

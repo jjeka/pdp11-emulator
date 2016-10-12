@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
             int val = value->text().toInt(&ok, 8);
             if (ok)
                 vcpu_->getRegister(i) = val;
-            value->setText(QString().sprintf("%.8o", (unsigned) vcpu_->getRegister(i)));
+            value->setText(QString().sprintf("%.6o", (unsigned) vcpu_->getRegister(i)));
         });
 
         ui_->registersLayout->addRow(label, value);
@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
 void MainWindow::refreshCpuState_()
 {
     for (unsigned i = 0; i < vcpu_->getNRegisters(); i++)
-        registerValues_[i]->setText(QString().sprintf("%.8o", (unsigned) vcpu_->getRegister(i)));
+        registerValues_[i]->setText(QString().sprintf("%.6o", (unsigned) vcpu_->getRegister(i)));
 
     disasModel_->reload();
 

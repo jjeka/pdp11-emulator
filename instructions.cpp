@@ -769,3 +769,47 @@ bool instr_jmp(uint16_t instr, Vcpu& cpu)
 {
     return cpu.onJmp_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
 }
+
+bool instr_jsr(uint16_t instr, MemRegion& reg, MemRegion& /*dst*/, Vcpu& cpu)
+{
+    uint16_t oldPC = cpu.getPC();
+    cpu.getSP() -= sizeof (uint16_t);
+    cpu.getWordAtAddress(cpu.getSP()) = reg;
+    reg = cpu.getPC();
+    int pcShift = (VCPU_GET_REG(instr, 0) == VCPU_PC_REGISTER &&
+                   (VCPU_GET_ADDR_MODE(instr, 0) == VCPU_ADDR_MODE_INDEX ||
+                    VCPU_GET_ADDR_MODE(instr, 0) == VCPU_ADDR_MODE_INDEX_DEFERRED)) ?
+                sizeof (uint16_t) : 0; /* pc can be already shifted */
+    cpu.getPC() = oldPC - pcShift;
+    cpu.onJmp_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+
+    return true;
+}
+
+bool instr_rts(MemRegion& reg, Vcpu& cpu)
+{
+    cpu.getPC() = reg;
+    reg = cpu.getWordAtAddress(cpu.getSP());
+    cpu.getSP() += sizeof (uint16_t);
+
+    return true;
+}
+
+bool instr_mark(uint8_t n, Vcpu& cpu)
+{
+    cpu.getSP() = cpu.getSP() + 2 * n;
+    cpu.getPC() = cpu.getRegister(5);
+    cpu.getRegister(5) = cpu.getSP();
+    cpu.getSP() += sizeof (uint16_t);
+
+    return true;
+}
+
+bool instr_sob(MemRegion& reg, uint8_t n, Vcpu& cpu)
+{
+    reg = reg - 1;
+    if (reg != 0)
+        cpu.getPC() = cpu.getPC() - 2 * n;
+
+    return true;
+}
