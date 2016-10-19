@@ -145,7 +145,7 @@ void Vcpu::toOctal_(uint16_t n, char* str)
     else if (int16_t(n) == 0)
         sprintf(str, "0");
     else
-        sprintf(str, "-0%o", -unsigned(int16_t(n)));
+        sprintf(str, "-0%o", unsigned(-int16_t(n)));
 }
 
 std::string Vcpu::instrAtAddress(uint16_t address)
@@ -402,7 +402,7 @@ void Vcpu::threadFunc_()
     while (threadState_ != VCPU_THREAD_STATE_DESTROY)
     {
         while (threadState_ == VCPU_THREAD_STATE_IDLE)
-            usleep(1000);
+            sleepMS(1);
 
         threadRunning_ = true;
         if (threadState_ == VCPU_THREAD_STATE_RUNNING)
@@ -471,7 +471,7 @@ void Vcpu::reset()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        usleep(1000);
+        sleepMS(1);
 
     for (int i = 0; i < (int) VCPU_BUFFER_SIZE; i++)
     {
@@ -495,7 +495,7 @@ void Vcpu::pause()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        usleep(1000);
+        sleepMS(1);
 }
 
 void Vcpu::step()
@@ -508,7 +508,7 @@ void Vcpu::step()
         threadState_ = VCPU_THREAD_STATE_SINGLE_INSTRUCTION;
 
         while (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            usleep(1000);
+            sleepMS(1);
 
         threadState_ = VCPU_THREAD_STATE_IDLE;
     }

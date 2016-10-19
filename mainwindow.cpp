@@ -96,7 +96,7 @@ MainWindow::~MainWindow()
 
 bool MainWindow::isChildWidgetOfAnyLayout_(QLayout *layout, QWidget *widget)
 {
-   if (layout == NULL or widget == NULL)
+   if (layout == NULL || widget == NULL)
       return false;
 
    if (layout->indexOf(widget) >= 0)

@@ -142,7 +142,7 @@ bool instr_mul(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vcp
         reg = uint16_t (result);
     else
     {
-        reg = uint16_t (uint16_t(result) >> 16);
+        reg = uint16_t (uint32_t(result) >> 16);
         reg2 = uint16_t (result);
     }
 
@@ -251,16 +251,16 @@ bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vc
     if (shift > 0)
     {
         if (shift == 1)
-            psw.c = (GET_BIT(reg, 31) != 0);
+            psw.c = (GET_BIT(regresult, 31) != 0);
         else
-            psw.c = (GET_BIT(reg >> (shift - 1), 31) != 0);
+            psw.c = (GET_BIT(regresult >> (shift - 1), 31) != 0);
     }
     else if (shift < 0)
     {
         if (shift == -1)
-            psw.c = (GET_BIT(reg, 0) != 0);
+            psw.c = (GET_BIT(regresult, 0) != 0);
         else
-            psw.c = (GET_BIT(reg >> (-shift - 1), 0) != 0);
+            psw.c = (GET_BIT(regresult >> (-shift - 1), 0) != 0);
     }
     else
     {
@@ -271,7 +271,7 @@ bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vc
         reg = uint16_t(result);
     else
     {
-        reg = (uint16_t(result) >> 16);
+        reg = (uint32_t(result) >> 16);
         reg2 = uint16_t(result);
     }
 

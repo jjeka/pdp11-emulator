@@ -9,10 +9,10 @@
 #include <set>
 #include <functional>
 #include <thread>
-#include <unistd.h>
 
 #include "instructions.h"
 #include "keycodes.h"
+#include "utils.h"
 
 // TODO: step fix
 // TODO: pos fix
