@@ -1,0 +1,11 @@
+Simple PDP 11 emulator
+Authors: Nikitenko Evgeny, Ivanov Alexey & Samara Oleksa
+
+How to compile pdp11-gcc: http://ancientbits.blogspot.ru/2012/07/programming-barebones-pdp11.html
+
+To generate rom.bin file:
+1. Install pdp11-gcc
+2. Compile utils/rom_creator with utils/rom_creator.make
+3. Compile test with ./build.sh test.c
+
+To compile PDP 11 emulator you need QT Creator
