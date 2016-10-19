@@ -46,13 +46,51 @@ void graph()
 	}
 }
 
+void lol(char c, int x0, int y0, Color foreground, Color background, int zoom)
+{
+	if (c < 0)
+		return;
+
+	int start = ((int) c) * 5;
+	for (int x = 0; x < 5; x++)
+	{
+		unsigned char data = FONT_DATA[start + x];
+
+		for (int y = 1; y < 8; y++)
+		{
+			if (data & (1 << y))
+			{
+				if (foreground != TRANSPARENT)
+				{
+					for (int xx = 0; xx < zoom; xx++)
+						for (int yy = 0; yy < zoom; yy++)
+						set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, foreground);
+				}
+			}
+			else
+			{
+				if (background != TRANSPARENT)
+				{
+					for (int xx = 0; xx < zoom; xx++)
+						for (int yy = 0; yy < zoom; yy++)
+						set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, background);
+					}
+			}
+		}
+	}
+}
+
 void exec()
 {
 	//anim();
 	//graph();
 
+	int a[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 };
+	draw_text(a, 12, 2, 255, 128, 1);
+
 	int x0 = 15, y0 = 5, x1 = 20, y1 = 5, x2 = 5, y2 = 40;
-	int vx0 = 3, vy0 = 2, vx1 = -2, vy1 = -1, vx2 = -3, vy2 = 1;
+	int vx0 = 2, vy0 = 1, vx1 = 1, vy1 = -2, vx2 = -1, vy2 = 1;
+	int i = 0;
 	while (1)
 	{
 		x0 += vx0;
@@ -75,8 +113,12 @@ void exec()
 		if (y2 <= 0 || y2 > SCREEN_SIZE_Y)
 			vy2 = -vy2;
 
-		draw_triangle(x0, y0, x1, y1, x2, y2, 2, 255, 127);
+		int at = i % 256;
+		int bt = i / 256;
+		Color c = (bt % 2) ? i : (255 - i);
+		draw_triangle(x0, y0, x1, y1, x2, y2, 2, c, TRANSPARENT);
 
+		i++;
 		//sleep(500);
 	}
 }

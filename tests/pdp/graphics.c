@@ -40,7 +40,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 			unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
 			if (abs(s) < 128 && 4 * s * s <= size2)
 			{
-				set_pixel(x, y, 255);
+				set_pixel(x, y, c);
 			}
 		}
 	}
@@ -119,5 +119,54 @@ void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, int size, Col
 		draw_line(x0, y0, x1, y1, size, color);
 		draw_line(x0, y0, x2, y2, size, color);
 		draw_line(x1, y1, x2, y2, size, color);
+	}
+}
+
+void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int zoom)
+{
+	if (c < 0)
+		return;
+
+	int start = ((int) c) * 5;
+	for (int x = 0; x < 5; x++)
+	{
+		unsigned char data = FONT_DATA[start + x];
+
+		for (int y = 1; y < 8; y++)
+		{
+			if (data & (1 << y))
+			{
+				if (foreground != TRANSPARENT)
+				{
+					for (int xx = 0; xx < zoom; xx++)
+						for (int yy = 0; yy < zoom; yy++)
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, foreground);
+				}
+			}
+			else
+			{
+				if (background != TRANSPARENT)
+				{
+					for (int xx = 0; xx < zoom; xx++)
+						for (int yy = 0; yy < zoom; yy++)
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, background);
+				}
+			}
+		}
+	}
+}
+
+void draw_text(int str[], int x0, int y0, Color foreground, Color background, int zoom)
+{
+	int i;
+	for (i = 0; str[i]; i++)
+	{
+		if (str[i + 1] && background != TRANSPARENT)
+		{
+			for (int xx = 0; xx < zoom; xx++)
+				for (int yy = 0; yy < zoom * 7; yy++)
+					set_pixel(x0 + 6 * zoom * (i + 1) - zoom + xx, y0 + yy, background);
+		}
+		draw_symbol(str[i], x0 + 6 * zoom * i, y0, foreground, background, zoom);
 	}
 }
