@@ -52,7 +52,8 @@ void exec()
 	//graph();
 
 	int x0 = 15, y0 = 5, x1 = 20, y1 = 5, x2 = 5, y2 = 40;
-	int vx0 = 3, vy0 = 2, vx1 = -2, vy1 = -1, vx2 = -3, vy2 = 1;
+	int vx0 = 2, vy0 = 1, vx1 = 1, vy1 = -2, vx2 = -1, vy2 = 1;
+	int i = 0;
 	while (1)
 	{
 		x0 += vx0;
@@ -75,8 +76,12 @@ void exec()
 		if (y2 <= 0 || y2 > SCREEN_SIZE_Y)
 			vy2 = -vy2;
 
-		draw_triangle(x0, y0, x1, y1, x2, y2, 2, 255, 127);
+		int at = i % 256;
+		int bt = i / 256;
+		Color c = (bt % 2) ? i : (255 - i);
+		draw_triangle(x0, y0, x1, y1, x2, y2, 2, c, TRANSPARENT);
 
+		i++;
 		//sleep(500);
 	}
 }

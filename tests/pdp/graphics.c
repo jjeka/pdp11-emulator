@@ -40,7 +40,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 			unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
 			if (abs(s) < 128 && 4 * s * s <= size2)
 			{
-				set_pixel(x, y, 255);
+				set_pixel(x, y, c);
 			}
 		}
 	}
