@@ -24,7 +24,10 @@ SOURCES += main.cpp\
     instructions.cpp \
     instructiontable.cpp \
     utils.cpp \
-    memregion.cpp
+    memregion.cpp \
+    bus.cpp \
+    device.cpp \
+    memory.cpp
 
 HEADERS  += mainwindow.h \
     vcpu.h \
@@ -35,7 +38,10 @@ HEADERS  += mainwindow.h \
     instructions.h \
     utils.h \
     memregion.h \
-    keycodes.h
+    keycodes.h \
+    bus.h \
+    device.h \
+    memory.h
     instructions.h
 
 FORMS    += mainwindow.ui
