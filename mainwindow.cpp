@@ -96,7 +96,7 @@ MainWindow::~MainWindow()
 
 bool MainWindow::isChildWidgetOfAnyLayout_(QLayout *layout, QWidget *widget)
 {
-   if (layout == NULL or widget == NULL)
+   if (layout == NULL || widget == NULL)
       return false;
 
    if (layout->indexOf(widget) >= 0)
@@ -232,7 +232,7 @@ void MainWindow::createMenus_()
     {
         QMessageBox::about(this, "About PDP 11 emulator",
                                  "Version " APP_VERSION "<br>"
-                                 "Authors: Nikitenko Evgeny & Ivanov Alexey<br>"
+                                 "Authors: Nikitenko Evgeny, Ivanov Alexey & Samara Oleksa<br>"
                                  "Github: <a href='https://github.com/jjeka/pdp11-emulator'>github.com/jjeka/pdp11-emulator</a>");
     });
     menuBar()->addAction(aboutAct);

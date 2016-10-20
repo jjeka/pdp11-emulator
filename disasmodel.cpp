@@ -18,7 +18,7 @@ int DisasModel::rowCount(const QModelIndex&) const
 
 QVariant DisasModel::data(const QModelIndex &index, int role) const
 {
-    uint16_t addr(index.row() * sizeof (uint16_t));
+    uint16_t addr = uint16_t(index.row() * sizeof (uint16_t));
 
     if (!index.isValid() || addr >= vcpu_->getMemSize())
         return QVariant();
@@ -52,7 +52,7 @@ bool DisasModel::setData(const QModelIndex &index, const QVariant &value, int ro
     if (!index.isValid())
         return false;
 
-    uint16_t address = index.row() * sizeof (uint16_t);
+    uint16_t address = uint16_t(index.row() * sizeof (uint16_t));
 
     if (role == Qt::CheckStateRole)
     {

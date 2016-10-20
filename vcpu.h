@@ -9,10 +9,10 @@
 #include <set>
 #include <functional>
 #include <thread>
-#include <unistd.h>
 
 #include "instructions.h"
 #include "keycodes.h"
+#include "utils.h"
 
 // TODO: step fix
 // TODO: pos fix
@@ -151,7 +151,7 @@ private:
 
     void threadFunc_();
     void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type);
-    std::string getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded = NULL);
+    std::string getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded, bool secondParam);
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();
     bool isByteInstruction_(uint16_t instr);

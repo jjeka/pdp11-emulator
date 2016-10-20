@@ -145,7 +145,7 @@ void Vcpu::toOctal_(uint16_t n, char* str)
     else if (int16_t(n) == 0)
         sprintf(str, "0");
     else
-        sprintf(str, "-0%o", -unsigned(int16_t(n)));
+        sprintf(str, "-0%o", unsigned(-int16_t(n)));
 }
 
 std::string Vcpu::instrAtAddress(uint16_t address)
@@ -173,8 +173,8 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     {
         bool dataNeeded = false;
 
-        std::string r2 = getOperand_(address, instr, 6, data1, &dataNeeded);
-        std::string r1 = getOperand_(address, instr, 0, dataNeeded ? data2 : data1);
+        std::string r2 = getOperand_(address, instr, 6, data1, &dataNeeded, false);
+        std::string r1 = getOperand_(address, instr, 0, dataNeeded ? data2 : data1, NULL, dataNeeded);
         sprintf(name, "%s %s, %s", instructions_[instr].name->c_str(), r2.c_str(), r1.c_str());
     }
         break;
@@ -182,7 +182,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     case VCPU_INSTR_TYPE_OPERAND_REGISTER:
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
-        std::string r1 = getOperand_(address, instr, 0, data1);
+        std::string r1 = getOperand_(address, instr, 0, data1, NULL, false);
         std::string r2 = getRegisterByInstr_(instr, 6);
         sprintf(name, "%s %s, %s", instructions_[instr].name->c_str(), r1.c_str(), r2.c_str());
     }
@@ -198,14 +198,14 @@ std::string Vcpu::instrAtAddress(uint16_t address)
     case VCPU_INSTR_TYPE_SINGLE_OPERAND:
     case VCPU_INSTR_TYPE_SINGLE_OPERAND_EX:
     {
-        std::string r = getOperand_(address, instr, 0, data1);
+        std::string r = getOperand_(address, instr, 0, data1, NULL, false);
         sprintf(name, "%s %s", instructions_[instr].name->c_str(), r.c_str());
     }
         break;
 
     case VCPU_INSTR_TYPE_BRANCH:
         toOctal_(int16_t(int8_t(instr & 255)) * 2 + 2, temp);
-        sprintf(name, "%s %s", instructions_[instr].name->c_str(), temp);
+        sprintf(name, "%s 0%o", instructions_[instr].name->c_str(), unsigned(address + int16_t(int8_t(instr & 255)) * 2 + 2));
         break;
 
     case VCPU_INSTR_TYPE_NUMBER:
@@ -237,7 +237,7 @@ std::string Vcpu::getRegisterByInstr_(uint16_t instr, int begin)
     return registerNames_[r];
 }
 
-std::string Vcpu::getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded)
+std::string Vcpu::getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded, bool secondParam)
 {
     int r = (instr >> begin) & 7;
     int mode = (instr >> (begin + 3)) & 7;
@@ -316,13 +316,15 @@ std::string Vcpu::getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t d
             break;
 
         case VCPU_ADDR_MODE_INDEX: // relative
-            sprintf(result, "0%o", unsigned((uint16_t(pc + data + 2 * sizeof (uint16_t))))); // unsigned octal needed
+            sprintf(result, "0%o", unsigned((uint16_t(pc + data +
+                    (2 + (secondParam ? 1 : 0)) * sizeof (uint16_t))))); // unsigned octal needed
             if (dataNeeded)
                 *dataNeeded = true;
             break;
 
         case VCPU_ADDR_MODE_INDEX_DEFERRED: // relative deferred
-            sprintf(result, "@0%o", unsigned((uint16_t(pc + data + 2 * sizeof (uint16_t))))); // unsigned octal needed
+            sprintf(result, "@0%o", unsigned((uint16_t(pc + data +
+                    (2 + (secondParam ? 1 : 0)) * sizeof (uint16_t))))); // unsigned octal needed
             if (dataNeeded)
                 *dataNeeded = true;
             break;
@@ -400,7 +402,7 @@ void Vcpu::threadFunc_()
     while (threadState_ != VCPU_THREAD_STATE_DESTROY)
     {
         while (threadState_ == VCPU_THREAD_STATE_IDLE)
-            usleep(1000);
+            sleepMS(1);
 
         threadRunning_ = true;
         if (threadState_ == VCPU_THREAD_STATE_RUNNING)
@@ -469,7 +471,7 @@ void Vcpu::reset()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        usleep(1000);
+        sleepMS(1);
 
     for (int i = 0; i < (int) VCPU_BUFFER_SIZE; i++)
     {
@@ -493,7 +495,7 @@ void Vcpu::pause()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        usleep(1000);
+        sleepMS(1);
 }
 
 void Vcpu::step()
@@ -506,7 +508,7 @@ void Vcpu::step()
         threadState_ = VCPU_THREAD_STATE_SINGLE_INSTRUCTION;
 
         while (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            usleep(1000);
+            sleepMS(1);
 
         threadState_ = VCPU_THREAD_STATE_IDLE;
     }

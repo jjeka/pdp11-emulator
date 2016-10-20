@@ -25,26 +25,24 @@ bool instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 
 bool instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    int32_t res = int16_t(src) - int16_t(dst);
-    psw.n = (int16_t(res) < 0);
+    uint32_t res = uint32_t(src) + uint32_t(~uint16_t(dst)) + 1;
+    psw.n = (sign(int16_t(res)) == -1);
     psw.z = (int16_t(res) == 0);
     psw.v = (sign(int16_t(dst)) != sign(int16_t(src)) &&
-            sign(int16_t(dst)) != 0 && sign(int16_t(src)) != 0 &&
             int16_t(sign(res)) == int16_t(sign(dst)));
-    psw.c = (res > INT16_MAX);
+    psw.c = ((res & (1 << 16)) != 0);
 
     return true;
 }
 
 bool instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    int16_t res = int8_t(src) - int8_t(dst);
-    psw.n = (int16_t(res) < 0);
-    psw.z = (int16_t(res) == 0);
-    psw.v = (sign(int16_t(dst)) != sign(int16_t(src)) &&
-            sign(int16_t(dst)) != 0 && sign(int16_t(src)) != 0 &&
-            sign(int16_t(res)) == sign(int16_t(dst)));
-    psw.c = (res > INT8_MAX);
+    uint16_t res = uint8_t(src) + uint8_t(~uint8_t(dst)) + 1;
+    psw.n = (sign(int8_t(res)) == -1);
+    psw.z = (int8_t(res) == 0);
+    psw.v = (sign(int8_t(dst)) != sign(int8_t(src)) &&
+            sign(int8_t(res)) == sign(int8_t(dst)));
+    psw.c = ((res & (1 << 8)) != 0);
 
     return true;
 }
@@ -53,26 +51,24 @@ bool instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
     int32_t res = int16_t(src) + int16_t(dst);
     dst = int16_t(res);
-    psw.n = (int16_t(res) < 0);
+    psw.n = (sign(int16_t(res)) == -1);
     psw.z = (int16_t(res) == 0);
     psw.v = (sign(int16_t(src)) == sign(int16_t(dst)) &&
-             sign(int16_t(src)) != 0 && sign(int16_t(dst)) != 0 &&
             sign(int16_t(res)) == -sign(int16_t(dst)));
-    psw.c = (res > INT16_MAX);
+    psw.c = ((res & (1 << 16)) != 0);
 
     return true;
 }
 
 bool instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw)
 {
-    int32_t res = int16_t(src) - int16_t(dst);
+    uint32_t res = uint32_t(dst) + uint32_t(~uint16_t(src)) + 1;
     dst = int16_t(res);
-    psw.n = (int16_t(res) < 0);
+    psw.n = (sign(int16_t(res)) == -1);
     psw.z = (int16_t(res) == 0);
     psw.v = (sign(int16_t(dst)) != sign(int16_t(src)) &&
-            sign(int16_t(dst)) != 0 && sign(int16_t(src)) != 0 &&
             sign(int16_t(res)) == sign(int16_t(src)));
-    psw.c = (res > INT16_MAX);
+    psw.c = ((res & (1 << 16)) != 0);
 
     return true;
 }
@@ -146,7 +142,7 @@ bool instr_mul(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vcp
         reg = uint16_t (result);
     else
     {
-        reg = uint16_t (uint16_t(result) >> 16);
+        reg = uint16_t (uint32_t(result) >> 16);
         reg2 = uint16_t (result);
     }
 
@@ -209,7 +205,7 @@ bool instr_ash(bool /*onereg*/, MemRegion& reg, MemRegion& /*reg2*/, MemRegion& 
 
     psw.n = (int16_t(result) < 0);
     psw.z = (int16_t(result) == 0);
-    psw.v = (sign(int16_t(result)) != 0 && sign(int16_t(reg)) != 0 && sign(int16_t(result)) != sign(int16_t(reg)));
+    psw.v = (sign(int16_t(result)) != sign(int16_t(reg)));
 
     if (shift > 0)
     {
@@ -250,21 +246,21 @@ bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vc
 
     psw.n = (int32_t(result) < 0);
     psw.z = (int32_t(result) == 0);
-    psw.v = (sign(int32_t(result)) != 0 && sign(int16_t(reg)) != 0 && sign(int32_t(result)) != sign(int16_t(reg)));
+    psw.v = (sign(int32_t(result)) != sign(int16_t(reg)));
 
     if (shift > 0)
     {
         if (shift == 1)
-            psw.c = (GET_BIT(reg, 31) != 0);
+            psw.c = (GET_BIT(regresult, 31) != 0);
         else
-            psw.c = (GET_BIT(reg >> (shift - 1), 31) != 0);
+            psw.c = (GET_BIT(regresult >> (shift - 1), 31) != 0);
     }
     else if (shift < 0)
     {
         if (shift == -1)
-            psw.c = (GET_BIT(reg, 0) != 0);
+            psw.c = (GET_BIT(regresult, 0) != 0);
         else
-            psw.c = (GET_BIT(reg >> (-shift - 1), 0) != 0);
+            psw.c = (GET_BIT(regresult >> (-shift - 1), 0) != 0);
     }
     else
     {
@@ -275,7 +271,7 @@ bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, Vc
         reg = uint16_t(result);
     else
     {
-        reg = (uint16_t(result) >> 16);
+        reg = (uint32_t(result) >> 16);
         reg2 = uint16_t(result);
     }
 
