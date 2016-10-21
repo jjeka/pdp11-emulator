@@ -1,8 +1,6 @@
 #ifndef PDP_MAIN_H
 #define PDP_MAIN_H
 
-#include "entry.c"
-
 #include "start.h"
 #include "utils.h"
 #include "graphics.h"

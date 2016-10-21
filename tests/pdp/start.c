@@ -4,13 +4,8 @@ void _init_data();
 
 void _start2()
 {
-	asm volatile("mov $0177776, sp");
-
 	_init_data();
 	exec();
-
-	int __end = 0;
-	asm volatile("mov %0, r4\nhalt\njmp $0" :: "r"(__end));
 }
 
 extern const int* DATA_SECTION_START;
