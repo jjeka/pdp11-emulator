@@ -406,7 +406,7 @@ void Vcpu::threadFunc_()
     while (threadState_ != VCPU_THREAD_STATE_DESTROY)
     {
         while (threadState_ == VCPU_THREAD_STATE_IDLE)
-            sleepMS(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         threadRunning_ = true;
         if (threadState_ == VCPU_THREAD_STATE_RUNNING)
@@ -475,7 +475,7 @@ void Vcpu::reset()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        sleepMS(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     memset(ram_.getData(), 0, VCPU_RAM_SIZE);
     memset(fb_.getData(), 0, VCPU_FB_SIZE);
@@ -497,7 +497,7 @@ void Vcpu::pause()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        sleepMS(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void Vcpu::step()
@@ -510,7 +510,7 @@ void Vcpu::step()
         threadState_ = VCPU_THREAD_STATE_SINGLE_INSTRUCTION;
 
         while (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            sleepMS(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         threadState_ = VCPU_THREAD_STATE_IDLE;
     }
