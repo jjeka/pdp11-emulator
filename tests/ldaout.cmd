@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-ENTRY(__start)
+ENTRY(_start)
 
 MEMORY
 {
