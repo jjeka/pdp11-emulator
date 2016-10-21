@@ -209,7 +209,7 @@ std::string Vcpu::instrAtAddress(uint16_t address)
 
     case VCPU_INSTR_TYPE_BRANCH:
         toOctal_(int16_t(int8_t(instr & 255)) * 2 + 2, temp);
-        sprintf(name, "%s 0%o", instructions_[instr].name->c_str(), unsigned(address + int16_t(int8_t(instr & 255)) * 2 + 2));
+        sprintf(name, "%s 0%o", instructions_[instr].name->c_str(), unsigned(uint16_t(address + int16_t(int8_t(instr & 255)) * 2 + 2)));
         break;
 
     case VCPU_INSTR_TYPE_NUMBER:
