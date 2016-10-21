@@ -13,6 +13,8 @@
 #include "instructions.h"
 #include "keycodes.h"
 #include "utils.h"
+#include "bus.h"
+#include "memory.h"
 
 // TODO: step fix
 // TODO: pos fix
@@ -23,7 +25,7 @@
 #define VCPU_NUM_REGISTERS          8
 #define VCPU_MEM_SIZE               (1 << 16)
 #define VCPU_BUFFER_SIZE            (VCPU_MEM_SIZE + VCPU_NUM_REGISTERS * sizeof (uint16_t))
-#define VCPU_FLAG_REGISTER_OFFSET   (VCPU_MEM_SIZE - sizeof (uint8_t))
+#define VCPU_FLAG_REGISTER_OFFSET   (VCPU_MEM_SIZE - sizeof (uint16_t))
 
 #define VCPU_DISPLAY_WIDTH          100
 #define VCPU_DISPLAY_HEIGHT         100
@@ -33,8 +35,8 @@
 #define VCPU_FB_OFFSET              (VCPU_ROM_OFFSET + VCPU_ROM_SIZE)
 #define VCPU_FB_SIZE                (VCPU_DISPLAY_WIDTH * VCPU_DISPLAY_HEIGHT)
 #define VCPU_RAM_OFFSET             (VCPU_FB_OFFSET + VCPU_FB_SIZE)
-#define VCPU_RAM_SIZE               (VCPU_MEM_SIZE - VCPU_RAM_OFFSET - 1)
-// ||--- rom ---|--- fb ---|--- ram ---| psw ||
+#define VCPU_RAM_SIZE               (0160000 - VCPU_RAM_OFFSET)
+// ||--- rom ---|--- fb ---|--- ram ---|--- devices ---| psw ||
 
 #define VCPU_NEGATIVE_FLAG_BIT      4
 #define VCPU_ZERO_FLAG_BIT          5
@@ -78,7 +80,7 @@ public:
 
     VcpuStatus getStatus();
 
-    uint16_t& getWordAtAddress(uint16_t addr);
+    uint16_t getWordAtAddress(uint16_t addr);
     std::string getRegisterName(unsigned n);
     uint16_t& getRegister(unsigned n);
     uint16_t& getPC();
@@ -89,6 +91,7 @@ public:
     unsigned getDisplayHeight();
     void* getFramebuffer();
 	unsigned getMemSize();
+    Bus& getBus();
     std::string instrAtAddress(uint16_t address);
     void start();
     void reset();
@@ -115,10 +118,14 @@ public:
     void setCarryFlag(bool flag);
 
 private:
-
+    Bus bus_;
     VcpuStatus status_;
     std::array<std::string, VCPU_NUM_REGISTERS> registerNames_;
-    uint8_t memory_[VCPU_BUFFER_SIZE];
+    uint16_t registers_[VCPU_NUM_REGISTERS];
+    uint8_t psw_;
+    Memory rom_;
+    Memory ram_;
+    Memory fb_;
     std::set<uint16_t> breakpoints_;
 
     struct Instruction
@@ -155,7 +162,7 @@ private:
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();
     bool isByteInstruction_(uint16_t instr);
-    uint16_t& getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
+    unsigned getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
     void toOctal_(uint16_t n, char* str);
 
     void onHalt_();
@@ -164,7 +171,7 @@ private:
     friend class MemRegion;
     friend bool instr_halt(uint16_t instr, Vcpu& cpu);
     friend bool instr_jmp(uint16_t instr, Vcpu& cpu);
-    friend bool instr_jsr(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
+    friend bool instr_jsr(uint16_t instr, MemRegion16& reg, MemRegion16& dst, Vcpu& cpu);
 };
 
 #endif // VCPU_H

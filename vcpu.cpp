@@ -1,8 +1,12 @@
 #include "vcpu.h"
 
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
+    bus_(this),
     registerNames_ { "r0", "r1", "r2", "r3", "r4", "r5", "sp", "pc" },
-    thread_(std::bind(&Vcpu::threadFunc_, this))
+    thread_(std::bind(&Vcpu::threadFunc_, this)),
+    rom_(VCPU_ROM_OFFSET, VCPU_ROM_SIZE, BUS_ADDRESSREGION_READ, &bus_, "ROM"),
+    ram_(VCPU_RAM_OFFSET, VCPU_RAM_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "RAM"),
+    fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB")
 {
     assert(VCPU_RAM_SIZE > 0);
 
@@ -87,7 +91,7 @@ uint16_t& Vcpu::getRegister(unsigned n)
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
 	assert(n < VCPU_NUM_REGISTERS);
-    return (uint16_t&) memory_[VCPU_MEM_SIZE + n * sizeof (uint16_t)];
+    return registers_[n];
 }
 
 uint16_t& Vcpu::getPC()
@@ -105,7 +109,7 @@ uint16_t& Vcpu::getSP()
 uint8_t& Vcpu::getPSW()
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
-    return (uint8_t&) memory_[VCPU_FLAG_REGISTER_OFFSET];
+    return psw_;
 }
 
 unsigned Vcpu::getNRegisters()
@@ -129,7 +133,7 @@ unsigned Vcpu::getDisplayHeight()
 void* Vcpu::getFramebuffer()
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
-	return (void*) &memory_[VCPU_FB_OFFSET];
+    return fb_.getData();
 }
 
 unsigned Vcpu::getMemSize()
@@ -459,7 +463,7 @@ void Vcpu::reset(std::string romFile)
         return;
     }
     fseek(file, 0, SEEK_SET);
-    fread(&memory_[VCPU_ROM_OFFSET], 1, VCPU_ROM_SIZE, file);
+    fread(rom_.getData(), 1, VCPU_ROM_SIZE, file);
     fclose(file);
 }
 
@@ -473,12 +477,10 @@ void Vcpu::reset()
     while (threadRunning_)
         sleepMS(1);
 
-    for (int i = 0; i < (int) VCPU_BUFFER_SIZE; i++)
-    {
-        if (i < VCPU_ROM_OFFSET || i >= VCPU_ROM_OFFSET + VCPU_ROM_SIZE)
-            memory_[i] = 0;
-    }
-    // ^ it's resets all registers
+    memset(ram_.getData(), 0, VCPU_RAM_SIZE);
+    memset(fb_.getData(), 0, VCPU_FB_SIZE);
+    memset(registers_, 0, VCPU_NUM_REGISTERS * sizeof (uint16_t));
+    psw_ = 0;
 
     getPC() = VCPU_ROM_OFFSET;
     breakpointHit_ = false;
@@ -594,20 +596,35 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
     {
         uint16_t incrementSize = isByteInstruction_(instr) ? 1 : 2;
-        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize), this);
-        MemRegion dstRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize), this);
+        unsigned srcAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6), incrementSize);
+        unsigned dstAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), incrementSize);
 
-        if (!((vcpu_instr_double_operand_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
-            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        if (isByteInstruction_(instr))
+        {
+            MemRegion8 srcRegion(srcAddr, this);
+            MemRegion8 dstRegion(dstAddr, this);
+
+            if (!((vcpu_instr_double_operand_8_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
+                status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        }
+        else
+        {
+            MemRegion16 srcRegion(srcAddr, this);
+            MemRegion16 dstRegion(dstAddr, this);
+
+            if (!((vcpu_instr_double_operand_16_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
+                status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        }
+
     }
         break;
 
     case VCPU_INSTR_TYPE_OPERAND_REGISTER:
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
-        MemRegion srcRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
-        MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
-        MemRegion reg2Region(&getAddrByAddrMode_(
+        MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
+        MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
+        MemRegion16 reg2Region(getAddrByAddrMode_(
                                  (VCPU_GET_REG(instr, 6) % 2 == 0) ? (VCPU_GET_REG(instr, 6) + 1) : VCPU_GET_REG(instr, 6),
                                  VCPU_ADDR_MODE_REGISTER, 2), this);
 
@@ -628,7 +645,7 @@ void Vcpu::executeInstruction_()
 
     case VCPU_INSTR_TYPE_SINGLE_REGISTER:
     {
-        MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_ADDR_MODE_REGISTER, 2), this);
+        MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_ADDR_MODE_REGISTER, 2), this);
 
         if (!((vcpu_instr_single_register_callback*) instructions_[instr].callback)
                 (regRegion, *this))
@@ -638,10 +655,20 @@ void Vcpu::executeInstruction_()
 
     case VCPU_INSTR_TYPE_SINGLE_OPERAND:
     {
-        MemRegion region(&getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2), this);
+        unsigned addr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0), 2);
 
-        if (!((vcpu_instr_single_operand_callback*) instructions_[instr].callback)(region, psw))
-            status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        if (isByteInstruction_(instr))
+        {
+            MemRegion8 region(addr, this);
+            if (!((vcpu_instr_single_operand_8_callback*) instructions_[instr].callback)(region, psw))
+                status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        }
+        else
+        {
+            MemRegion16 region(addr, this);
+            if (!((vcpu_instr_single_operand_16_callback*) instructions_[instr].callback)(region, psw))
+                status_ = VCPU_STATUS_INVALID_INSTRUCTION;
+        }
     }
     break;
 
@@ -674,7 +701,7 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_REGISTER_NUMBER:
     {
         uint8_t n = (instr & 63);
-        MemRegion regRegion(&getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
+        MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER, 2), this);
 
         if (!((vcpu_instr_register_number_callback*) instructions_[instr].callback)(regRegion, n, *this))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
@@ -705,60 +732,61 @@ void Vcpu::executeInstruction_()
 
 bool Vcpu::isByteInstruction_(uint16_t instr)
 {
-    return (instr & (1 << 15)) != 0 && !(instr >= 0160000 && instr  <= 0167777 /* sub instruction */);
+    /*single or double operand instruction*/
+    return (instr & (1 << 15)) && !(instr >= 0160000 && instr  <= 0167777 /* sub instruction */);
 }
 
-uint16_t& Vcpu::getWordAtAddress(uint16_t addr)
+uint16_t Vcpu::getWordAtAddress(uint16_t addr)
 {
-    return *((uint16_t*) &memory_[addr]);
+    return bus_.get16(addr);
 }
 
-uint16_t& Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
+unsigned Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
 {
-    uint16_t* addr = NULL;
+    unsigned addr = 0;
 
     switch (mode)
     {
     case VCPU_ADDR_MODE_REGISTER:
-        addr = &getRegister(r);
+        addr = VCPU_MEM_SIZE + r;
         break;
 
     case VCPU_ADDR_MODE_REGISTER_DEFFERED:
-        addr = &getWordAtAddress(getRegister(r));
+        addr = getRegister(r);
         break;
 
     case VCPU_ADDR_MODE_AUTOINCREMENT:
-        addr = &getWordAtAddress(getRegister(r));
+        addr = getRegister(r);
         getRegister(r) += ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : incrementSize);
         break;
 
     case VCPU_ADDR_MODE_AUTOINCREMENT_DEFFERED:
-        addr = &getWordAtAddress(getWordAtAddress(getRegister(r)));
+        addr = getWordAtAddress(getRegister(r));
         getRegister(r) += sizeof (uint16_t); // it's correct even for byte instructions
         break;
 
     case VCPU_ADDR_MODE_AUTODECREMENT:
         getRegister(r) -= ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : incrementSize);
-        addr = &getWordAtAddress(getRegister(r));
+        addr = getRegister(r);
         break;
 
     case VCPU_ADDR_MODE_AUTODECREMENT_DEFFERED:
         getRegister(r) -= sizeof (uint16_t); // it's correct even for byte instructions
-        addr = &getWordAtAddress(getWordAtAddress(getRegister(r)));
+        addr = getWordAtAddress(getRegister(r));
         break;
 
     case VCPU_ADDR_MODE_INDEX:
     {
-        int pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
-        addr = &getWordAtAddress(getRegister(r) + pcIteration + getWordAtAddress(getPC()));
+        uint16_t pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
+        addr = uint16_t(getRegister(r) + pcIteration + getWordAtAddress(getPC()));
         getPC() += sizeof (uint16_t);
     }
         break;
 
     case VCPU_ADDR_MODE_INDEX_DEFERRED:
     {
-        int pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
-        addr = &getWordAtAddress(getWordAtAddress(getRegister(r) + pcIteration + getWordAtAddress(getPC())));
+        uint16_t pcIteration = ((r == VCPU_PC_REGISTER) ? sizeof (uint16_t) : 0);
+        addr = getWordAtAddress(getRegister(r) + pcIteration + getWordAtAddress(getPC()));
         getPC() += sizeof (uint16_t);
     }
         break;
@@ -768,7 +796,7 @@ uint16_t& Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
         break;
     }
 
-    return *addr;
+    return addr;
 }
 
 void Vcpu::onHalt_()
@@ -825,4 +853,10 @@ bool Vcpu::onJmp_(int r, int mode)
     }
 
     return true;
+}
+
+
+Bus& Vcpu::getBus()
+{
+    return bus_;
 }

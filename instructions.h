@@ -42,66 +42,71 @@ struct VcpuPSW
     bool c;
 };
 
-typedef bool vcpu_instr_double_operand_callback(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-typedef bool vcpu_instr_operand_register_callback(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
-typedef bool vcpu_instr_operand_register_ex_callback(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
-typedef bool vcpu_instr_single_operand_callback(MemRegion& data, VcpuPSW& psw);
-typedef bool vcpu_instr_single_register_callback(MemRegion& reg, Vcpu& cpu);
+typedef bool vcpu_instr_double_operand_16_callback(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+typedef bool vcpu_instr_double_operand_8_callback(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+
+typedef bool vcpu_instr_operand_register_callback(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
+typedef bool vcpu_instr_operand_register_ex_callback(uint16_t instr, MemRegion16& reg, MemRegion16& dst, Vcpu& cpu);
+
+typedef bool vcpu_instr_single_operand_16_callback(MemRegion16& data, VcpuPSW& psw);
+typedef bool vcpu_instr_single_operand_8_callback(MemRegion8& data, VcpuPSW& psw);
+
+typedef bool vcpu_instr_single_register_callback(MemRegion16& reg, Vcpu& cpu);
 typedef bool vcpu_instr_without_parameters_and_ex_callback(uint16_t instr, Vcpu& cpu);
 typedef bool vcpu_instr_branch_callback(uint16_t& pc, int8_t offset, VcpuPSW& psw);
 typedef bool vcpu_instr_number_callback(uint8_t n, Vcpu& cpu);
-typedef bool vcpu_instr_register_number_callback(MemRegion& reg, uint8_t n, Vcpu& cpu);
+typedef bool vcpu_instr_register_number_callback(MemRegion16& reg, uint8_t n, Vcpu& cpu);
 
 // VCPU_INSTR_TYPE_DOUBLE_OPERAND
-bool instr_mov(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_movb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_cmp(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_cmpb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bit(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bitb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bic(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bicb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bis(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_bisb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_add(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_addb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_sub(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
-bool instr_subb(MemRegion& dst, MemRegion& src, VcpuPSW& psw);
+bool instr_mov(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_movb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_cmp(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_cmpb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_bit(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_bitb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_bic(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_bicb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_bis(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_bisb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_add(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_addb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
+bool instr_sub(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw);
+bool instr_subb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_OPERAND_REGISTER
-bool instr_mul(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
-bool instr_div(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
-bool instr_ash(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
-bool instr_ashc(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
-bool instr_xor(bool onereg, MemRegion& reg, MemRegion& reg2, MemRegion& src, VcpuPSW& psw);
+bool instr_mul(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
+bool instr_div(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
+bool instr_ash(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
+bool instr_ashc(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
+bool instr_xor(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& src, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_SINGLE_OPERAND
-bool instr_clr(MemRegion& data, VcpuPSW& psw);
-bool instr_clrb(MemRegion& data, VcpuPSW& psw);
-bool instr_com(MemRegion& data, VcpuPSW& psw);
-bool instr_comb(MemRegion& data, VcpuPSW& psw);
-bool instr_inc(MemRegion& data, VcpuPSW& psw);
-bool instr_incb(MemRegion& data, VcpuPSW& psw);
-bool instr_dec(MemRegion& data, VcpuPSW& psw);
-bool instr_decb(MemRegion& data, VcpuPSW& psw);
-bool instr_neg(MemRegion& data, VcpuPSW& psw);
-bool instr_negb(MemRegion& data, VcpuPSW& psw);
-bool instr_tst(MemRegion& data, VcpuPSW& psw);
-bool instr_tstb(MemRegion& data, VcpuPSW& psw);
-bool instr_asr(MemRegion& data, VcpuPSW& psw);
-bool instr_asrb(MemRegion& data, VcpuPSW& psw);
-bool instr_asl(MemRegion& data, VcpuPSW& psw);
-bool instr_aslb(MemRegion& data, VcpuPSW& psw);
-bool instr_ror(MemRegion& data, VcpuPSW& psw);
-bool instr_rorb(MemRegion& data, VcpuPSW& psw);
-bool instr_rol(MemRegion& data, VcpuPSW& psw);
-bool instr_rolb(MemRegion& data, VcpuPSW& psw);
-bool instr_swab(MemRegion& data, VcpuPSW& psw);
-bool instr_adc(MemRegion& data, VcpuPSW& psw);
-bool instr_adcb(MemRegion& data, VcpuPSW& psw);
-bool instr_sbc(MemRegion& data, VcpuPSW& psw);
-bool instr_sbcb(MemRegion& data, VcpuPSW& psw);
-bool instr_sxt(MemRegion& data, VcpuPSW& psw);
+bool instr_clr(MemRegion16& data, VcpuPSW& psw);
+bool instr_clrb(MemRegion8& data, VcpuPSW& psw);
+bool instr_com(MemRegion16& data, VcpuPSW& psw);
+bool instr_comb(MemRegion8& data, VcpuPSW& psw);
+bool instr_inc(MemRegion16& data, VcpuPSW& psw);
+bool instr_incb(MemRegion8& data, VcpuPSW& psw);
+bool instr_dec(MemRegion16& data, VcpuPSW& psw);
+bool instr_decb(MemRegion8& data, VcpuPSW& psw);
+bool instr_neg(MemRegion16& data, VcpuPSW& psw);
+bool instr_negb(MemRegion8& data, VcpuPSW& psw);
+bool instr_tst(MemRegion16& data, VcpuPSW& psw);
+bool instr_tstb(MemRegion8& data, VcpuPSW& psw);
+bool instr_asr(MemRegion16& data, VcpuPSW& psw);
+bool instr_asrb(MemRegion8& data, VcpuPSW& psw);
+bool instr_asl(MemRegion16& data, VcpuPSW& psw);
+bool instr_aslb(MemRegion8& data, VcpuPSW& psw);
+bool instr_ror(MemRegion16& data, VcpuPSW& psw);
+bool instr_rorb(MemRegion8& data, VcpuPSW& psw);
+bool instr_rol(MemRegion16& data, VcpuPSW& psw);
+bool instr_rolb(MemRegion8& data, VcpuPSW& psw);
+bool instr_swab(MemRegion16& data, VcpuPSW& psw);
+bool instr_adc(MemRegion16& data, VcpuPSW& psw);
+bool instr_adcb(MemRegion8& data, VcpuPSW& psw);
+bool instr_sbc(MemRegion16& data, VcpuPSW& psw);
+bool instr_sbcb(MemRegion8& data, VcpuPSW& psw);
+bool instr_sxt(MemRegion16& data, VcpuPSW& psw);
 
 // VCPU_INSTR_TYPE_BRANCH
 bool instr_br(uint16_t& pc, int8_t offset, VcpuPSW& psw);
@@ -126,9 +131,9 @@ bool instr_condition_code_operation(uint16_t instr, Vcpu& cpu);
 bool instr_halt(uint16_t instr, Vcpu& cpu);
 bool instr_jmp(uint16_t instr, Vcpu& cpu);
 
-bool instr_jsr(uint16_t instr, MemRegion& reg, MemRegion& dst, Vcpu& cpu);
-bool instr_rts(MemRegion& reg, Vcpu& cpu);
+bool instr_jsr(uint16_t instr, MemRegion16& reg, MemRegion16& dst, Vcpu& cpu);
+bool instr_rts(MemRegion16& reg, Vcpu& cpu);
 bool instr_mark(uint8_t n, Vcpu& cpu);
-bool instr_sob(MemRegion& reg, uint8_t n, Vcpu& cpu);
+bool instr_sob(MemRegion16& reg, uint8_t n, Vcpu& cpu);
 
 #endif // INSTRUCTIONS_H

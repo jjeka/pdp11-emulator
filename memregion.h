@@ -5,26 +5,31 @@
 
 class Vcpu;
 
-class MemRegion
+class MemRegion16
 {
+    unsigned addr_;
+    Vcpu* vcpu_;
+
 public:
-
-    MemRegion(uint16_t* mem, Vcpu* cpu);
+    MemRegion16(unsigned addr, Vcpu* vcpu);
     void operator = (uint16_t val);
-    void operator = (MemRegion& val);
-    operator uint16_t();
+    void operator = (const MemRegion16& val);
+    operator uint16_t() const;
 
-    void set8(uint8_t val);
-    void set16(uint16_t val);
-
-private:
-
-    uint16_t* mem_;
-    Vcpu* cpu_;
-    bool readonly_;
-    bool wordReadError_;
 
 };
 
+class MemRegion8
+{
+    Vcpu* vcpu_;
+    unsigned addr_;
+
+public:
+    MemRegion8(unsigned addr, Vcpu* vcpu);
+    void operator = (uint8_t val);
+    void operator = (const MemRegion8& val);
+    operator uint8_t() const;
+
+};
 
 #endif // MEMREGION_H

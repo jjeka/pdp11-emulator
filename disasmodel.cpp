@@ -8,12 +8,13 @@ DisasModel::DisasModel(Vcpu* vcpu) :
 
 void DisasModel::reload()
 {
-    emit dataChanged(index(0), index(vcpu_->getMemSize() / sizeof(uint16_t) - 1));
+    QModelIndex temp;
+    emit dataChanged(index(0), index(rowCount(temp) - 1));
 }
 
 int DisasModel::rowCount(const QModelIndex&) const
 {
-    return vcpu_->getMemSize() / sizeof(uint16_t);
+    return (VCPU_RAM_OFFSET + VCPU_RAM_SIZE) / sizeof(uint16_t);
 }
 
 QVariant DisasModel::data(const QModelIndex &index, int role) const

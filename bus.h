@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <string>
 
 class Vcpu;
 class Device;
@@ -18,9 +19,10 @@ public:
     struct AddressRegion
     {
         Device* owner;
-        uint16_t start;
-        uint16_t size;
+        unsigned start;
+        unsigned size;
         unsigned flags;
+        std::string name;
     };
 
 private:
@@ -28,17 +30,17 @@ private:
     Vcpu* vcpu_;
 
 private:
-    AddressRegion* resolveRegion_(uint16_t start, uint16_t size, bool write);
+    AddressRegion* resolveRegion_(unsigned start, unsigned size, bool write);
 
 public:
     Bus(Vcpu* vcpu);
 
-    void addAddressRegion(Device* owner, uint16_t start, uint16_t size, unsigned flags);
+    void addAddressRegion(Device* owner, unsigned start, unsigned size, unsigned flags, const std::string& name);
 
-    void set8(uint16_t address, uint8_t data);
-    uint8_t get8(uint16_t address);
-    void set16(uint16_t address, uint16_t data);
-    uint16_t get16(uint16_t address);
+    void set8(unsigned address, uint8_t data);
+    uint8_t get8(unsigned address);
+    void set16(unsigned address, uint16_t data);
+    uint16_t get16(unsigned address);
 
 
 };
