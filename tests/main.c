@@ -44,7 +44,7 @@ int f(int x)
 void graph()
 {
 	int x;
-	for (x = 1; x < 100; x++)
+	for (x = 1; x < 100 && running; x++)
 	{
 		if ((f(x - 1) < SCREEN_SIZE_Y || f(x) < SCREEN_SIZE_Y) && (f(x - 1) >= 0 || f(x) >= 0))
 		{
