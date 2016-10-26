@@ -1,13 +1,13 @@
-kv_iv_pc_addr	= 0160000
-kv_iv_sw_addr	= kv_iv_pc_addr + 2
+kb_iv_pc_addr	= 0160000
+kb_iv_sw_addr	= kb_iv_pc_addr + 2
 kb_iv_sw_val	= 0200
 kb_data_addr	= 0161000
 
 .text
 	.global __kb_init
 	__kb_init:
-		mov $kb_iv_sw_val, kv_iv_sw_addr
-		mov $kb_int_handler, kv_iv_pc_addr
+		mov $kb_iv_sw_val, kb_iv_sw_addr
+		mov $kb_int_handler, kb_iv_pc_addr
 		rts pc
 		
 	.global _set_kb_handler
@@ -30,7 +30,6 @@ kb_data_addr	= 0161000
 		mov kb_data_addr, -(sp)
 		jsr pc, @kb_handler
 		add $2, sp
-		
 		
 		mov (sp)+, r5
 		mov (sp)+, r4
