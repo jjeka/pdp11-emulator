@@ -2,3 +2,5 @@ emulator/pdp11.pro.user
 rom.bin
 tests/obj
 utils/out
+build-pdp11-Desktop-Debug
+build-pdp11-Desktop-Release
