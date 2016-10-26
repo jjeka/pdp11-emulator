@@ -849,7 +849,7 @@ Bus& Vcpu::getBus()
 
 bool Vcpu::interrupt(unsigned priority, uint16_t vectorAddress)
 {
-    if (priority <= (getPSW() >> 5))
+    if (priority <= (unsigned(getPSW()) >> 5))
         return false;
 
     getSP() -= sizeof (uint16_t);
