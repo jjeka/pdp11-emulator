@@ -702,10 +702,18 @@ void Vcpu::executeInstruction_()
         break;
     }
 
-    setNegativeFlag(psw.n);
-    setZeroFlag(psw.z);
-    setOverflowFlag(psw.v);
-    setCarryFlag(psw.c);
+    if (instructions_[instr].type != VCPU_INSTR_TYPE_OPERAND_REGISTER_EX &&
+        instructions_[instr].type != VCPU_INSTR_TYPE_SINGLE_REGISTER &&
+        instructions_[instr].type != VCPU_INSTR_TYPE_WITHOUT_PARAMETERS &&
+        instructions_[instr].type != VCPU_INSTR_TYPE_SINGLE_OPERAND_EX &&
+        instructions_[instr].type != VCPU_INSTR_TYPE_NUMBER &&
+        instructions_[instr].type != VCPU_INSTR_TYPE_REGISTER_NUMBER)
+    {
+        setNegativeFlag(psw.n);
+        setZeroFlag(psw.z);
+        setOverflowFlag(psw.v);
+        setCarryFlag(psw.c);
+    }
 
     if (getPC() % sizeof (uint16_t) != 0)
     {
