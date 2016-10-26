@@ -2,6 +2,7 @@
 #include "keyboard.h"
 
 void _init_data();
+void _kb_init();
 
 void _start2()
 {

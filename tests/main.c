@@ -107,7 +107,7 @@ void screen_saver2()
 
 void exec()
 {
-	_set_kb_handler(key_pressed);
+	set_kb_handler(key_pressed);
 	
 	draw_image(25, 15, 50, 50, ICON_DATA);
 	draw_text("PDP11", 24, 5, 255, TRANSPARENT, 2);

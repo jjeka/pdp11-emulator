@@ -857,9 +857,6 @@ bool Vcpu::interrupt(unsigned priority, uint16_t vectorAddress)
     getSP() -= sizeof (uint16_t);
     bus_.set16(getSP(), getPC());
 
-    fprintf(stderr, "0%o\n", vectorAddress);
-    fprintf(stderr, "0%o\n", getWordAtAddress(vectorAddress));
-
     getPC() = getWordAtAddress(vectorAddress);
     getPSW() = getWordAtAddress(vectorAddress + sizeof (uint16_t));
 

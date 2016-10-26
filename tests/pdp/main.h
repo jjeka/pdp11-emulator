@@ -11,7 +11,6 @@
 #include "start.c"
 #include "utils.c"
 #include "graphics.c"
-#include "keyboard.c"
 
 #endif // PDP_ADD_SOURCE
 

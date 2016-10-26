@@ -21,6 +21,6 @@ void draw_rectangle(int x1, int y1, int x2, int y2, int size, Color color, Color
 void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, int size, Color color, Color fillColor);
 void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int zoom);
 void draw_text(char str[], int x0, int y0, Color foreground, Color background, int zoom);
-void draw_image(int x0, int y0, int sx, int sy, unsigned char data[]);
+void draw_image(int x0, int y0, int sx, int sy, const unsigned char data[]);
 
 #endif // PDP_GRAPHICS

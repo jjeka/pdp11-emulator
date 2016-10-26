@@ -10,15 +10,14 @@ kb_data_addr	= 0161000
 		mov $kb_int_handler, kv_iv_pc_addr
 		rts pc
 		
-	.global __set_kb_handler
-	__set_kb_handler:
+	.global _set_kb_handler
+	_set_kb_handler:
 		mov 2(sp), kb_handler
 		rts pc
 		
 	kb_int_handler:
 		tst kb_handler
 		beq kb_int_handler_ret
-		
 		
 		# <3 gcc
 		mov r0, -(sp)
@@ -39,7 +38,6 @@ kb_data_addr	= 0161000
 		mov (sp)+, r2
 		mov (sp)+, r1
 		mov (sp)+, r0
-		
 		
 		kb_int_handler_ret:
 		rti
