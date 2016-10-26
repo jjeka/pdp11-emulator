@@ -194,7 +194,7 @@ bool instr_div(bool onereg, MemRegion16& reg, MemRegion16& reg2, MemRegion16& sr
 bool instr_ash(bool /*onereg*/, MemRegion16& reg, MemRegion16& /*reg2*/, MemRegion16& src, VcpuPSW& psw)
 {
     int shift = (src & 0x3F);
-    if (shift >= 31)
+    if (shift > 31)
         shift = shift - 64;
 
     uint16_t result = reg;
@@ -211,15 +211,19 @@ bool instr_ash(bool /*onereg*/, MemRegion16& reg, MemRegion16& /*reg2*/, MemRegi
     {
         if (shift == 1)
             psw.c = (GET_BIT(reg, 15) != 0);
-        else
+        else if (shift <= 16)
             psw.c = (GET_BIT(reg >> (shift - 1), 15) != 0);
+        else
+            psw.c = 0;
     }
     else if (shift < 0)
     {
         if (shift == -1)
             psw.c = (GET_BIT(reg, 0) != 0);
-        else
+        else if (shift >= -16)
             psw.c = (GET_BIT(reg >> (-shift - 1), 0) != 0);
+        else
+            psw.c = (GET_BIT(reg, 15) != 0);
     }
     else
     {
