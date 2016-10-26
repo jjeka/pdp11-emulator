@@ -729,7 +729,6 @@ uint16_t Vcpu::getWordAtAddress(uint16_t addr)
 
 unsigned Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
 {
-    fprintf(stderr, "%d %d %d\n", r, mode, int(incrementSize));
     unsigned addr = 0;
 
     switch (mode)
