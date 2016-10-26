@@ -12,7 +12,7 @@ struct Application
 
 int running = 0;
 
-void anim()
+void animation()
 {
 	int tt = 1;
 	while (running)
@@ -37,30 +37,10 @@ void anim()
 	}
 }
 
-int f(int x)
-{
-	return 98 - (x - 50) * (x - 50) / 8;
-}
-
-void graph()
-{
-	int x;
-	for (x = 1; x < 100 && running; x++)
-	{
-		if ((f(x - 1) < SCREEN_SIZE_Y || f(x) < SCREEN_SIZE_Y) && (f(x - 1) >= 0 || f(x) >= 0))
-		{
-			draw_line(x - 1, f(x - 1), x, f(x), 2, 255);
-			sleep(100);
-		}
-	}
-
-	while (running);
-}
-
 void screensaver1()
 {
 	int i = 0;	
-	while(running)
+	while (running)
 	{
 		int at = i % 16;
 		int bt = i / 16;
@@ -81,7 +61,6 @@ void screensaver2()
 	int i = 0;
 	while (running)
 	{
-
 		x0 += vx0;
 		y0 += vy0;
 		x1 += vx1;
@@ -152,7 +131,7 @@ const struct Application apps[] = {
 	{ "Text editor", text_editor, text_editor_key_pressed }, 
 	{ "Screensaver 1", screensaver1, NULL }, 
 	{ "Screensaver 2", screensaver2, NULL }, 
-	{ "Graph", graph, NULL }, 
+	{ "Animation", animation, NULL }, 
 	{ "About", about, NULL } };
 const int NUM_APPS = sizeof (apps) / sizeof (apps[0]);
 
@@ -165,7 +144,7 @@ void draw_menu()
 		int fillColor = (i == selection) ? 200 : 0;
 		int textColor = (i == selection) ? 0 : 255;
 		draw_rectangle(0, 20 * i, 99, 20 * (i + 1) - 1, 1, color, fillColor);
-		draw_text(apps[i].name, 3, 20 * i + 6, textColor, TRANSPARENT, 1);
+		draw_text(apps[i].name, 4, 20 * i + 6, textColor, TRANSPARENT, 1);
 	}
 }
 

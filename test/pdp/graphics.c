@@ -26,10 +26,10 @@ Color get_pixel(int x, int y)
 
 void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 {
-	int xmin = max(min(x1, x2), 0);
-	int xmax = min(max(x1, x2), SCREEN_SIZE_X);
-	int ymin = max(min(y1, y2), 0);
-	int ymax = min(max(y1, y2), SCREEN_SIZE_Y);
+	int xmin = min(x1, x2);
+	int xmax = max(x1, x2);
+	int ymin = min(y1, y2);
+	int ymax = max(y1, y2);
 	int dx = xmax - xmin;
 	int dy = ymax - ymin;
 	unsigned size2 = (dx*dx + dy*dy) * size * size;
