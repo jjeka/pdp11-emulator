@@ -810,7 +810,7 @@ bool instr_sob(MemRegion16& reg, uint8_t n, Vcpu& cpu)
     return true;
 }
 
-bool instr_rti(uint16_t instr, Vcpu& cpu)
+bool instr_rti(uint16_t /*instr*/, Vcpu& cpu)
 {
     cpu.getPC() = cpu.getWordAtAddress(cpu.getSP());
     cpu.getSP() += sizeof (uint16_t);

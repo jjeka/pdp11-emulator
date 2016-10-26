@@ -225,7 +225,7 @@ void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int 
 	}
 }
 
-void draw_text(char str[], int x0, int y0, Color foreground, Color background, int zoom)
+void draw_text(const char str[], int x0, int y0, Color foreground, Color background, int zoom)
 {
 	int i;
 	for (i = 0; str[i]; i++)

@@ -3,16 +3,19 @@
 #include "pdp/graphics.h"
 #include "pdp/keyboard.h"
 
-void key_pressed(unsigned data)
+struct Application
 {
-	//sleep(300);
-	draw_text("emulator", 28, 30, 210, TRANSPARENT, 1);
-}
+	char name[50];
+	void (*handler)();
+	void (*key_handler)(unsigned key);
+};
+
+int running = 0;
 
 void anim()
 {
 	int tt = 1;
-	while (1)
+	while (running)
 	{
 		int at = tt % 500;
 		int bt = tt / 500;
@@ -42,7 +45,7 @@ int f(int x)
 void graph()
 {
 	int x;
-	for (x = 1; x < 100; x++)
+	for (x = 1; x < 100 && running; x++)
 	{
 		if ((f(x - 1) < SCREEN_SIZE_Y || f(x) < SCREEN_SIZE_Y) && (f(x - 1) >= 0 || f(x) >= 0))
 		{
@@ -50,12 +53,14 @@ void graph()
 			sleep(100);
 		}
 	}
+
+	while (running);
 }
 
-void screen_saver1()
+void screensaver1()
 {
 	int i = 0;	
-	while(1)
+	while(running)
 	{
 		int at = i % 16;
 		int bt = i / 16;
@@ -69,12 +74,12 @@ void screen_saver1()
 	}
 }
 
-void screen_saver2()
+void screensaver2()
 {
 	int x0 = 15, y0 = 5, x1 = 20, y1 = 5, x2 = 5, y2 = 40;
 	int vx0 = 2, vy0 = 1, vx1 = 1, vy1 = -2, vx2 = -1, vy2 = 1;
 	int i = 0;
-	while (1)
+	while (running)
 	{
 
 		x0 += vx0;
@@ -106,17 +111,131 @@ void screen_saver2()
 	}
 }
 
-void exec()
+int te_x = 0;
+int te_y = 0;
+void text_editor_key_pressed(unsigned key)
 {
-	set_kb_handler(key_pressed);
-	
+	draw_symbol((char) key, 1 + 6 * te_x, 1 + 8 * te_y, 255, TRANSPARENT, 1);
+	te_x++;
+}
+
+void text_editor()
+{
+	te_x = 0;
+	te_y = 0;
+	while (running)
+	{
+		
+	}
+}
+
+void draw_about()
+{
 	draw_image(25, 15, 50, 50, ICON_DATA);
 	draw_text("PDP11", 24, 5, 255, TRANSPARENT, 2);
 	draw_text("NIKITENKO EVGENY", 2, 70, 255, TRANSPARENT, 1);
 	draw_text("IVANOV ALEXEY", 10, 80, 255, TRANSPARENT, 1);
 	draw_text("SAMARA OLEKSA", 10, 90, 255, TRANSPARENT, 1);
+}
+
+void about()
+{
+	draw_about();
+
+	while(running);
+}
+
+int selection = 0;
+int currentApp = -1;
+int mustRun = -1;
+const struct Application apps[] = {
+	{ "Text editor", text_editor, text_editor_key_pressed }, 
+	{ "Screensaver 1", screensaver1, NULL }, 
+	{ "Screensaver 2", screensaver2, NULL }, 
+	{ "Graph", graph, NULL }, 
+	{ "About", about, NULL } };
+const int NUM_APPS = sizeof (apps) / sizeof (apps[0]);
+
+void draw_menu()
+{
+	int i;
+	for (i = 0; i < NUM_APPS; i++)
+	{
+		int color = (i == selection) ? 255 : 100;
+		int fillColor = (i == selection) ? 200 : 0;
+		int textColor = (i == selection) ? 0 : 255;
+		draw_rectangle(0, 20 * i, 99, 20 * (i + 1) - 1, 1, color, fillColor);
+		draw_text(apps[i].name, 3, 20 * i + 6, textColor, TRANSPARENT, 1);
+	}
+}
+
+void key_pressed(unsigned key)
+{
+	if (key == 13)
+	{
+		if (currentApp != -1)
+			running = 0;
+
+		return;
+	}
+
+	if (currentApp == -1)
+	{
+		if (key == 1 /* up */)
+		{
+			selection--;
+			if (selection < 0)
+				selection = NUM_APPS - 1;
+			draw_menu();
+		}
+		else if (key == 2 /* down */)
+		{
+			selection++;
+			if (selection >= NUM_APPS)
+				selection = 0;
+			draw_menu();
+		}
+		else if (key == 5 /* return */)
+		{
+			if (apps[currentApp].handler != NULL)
+			{
+				mustRun = selection;
+			}
+		}
+	}
+	else
+	{
+		if (apps[currentApp].key_handler != NULL)
+			apps[currentApp].key_handler(key);
+	}
+
+}
+
+void exec()
+{	
+	draw_about();
 	sleep(3000);
 	clear_screen(COLOR_BLACK);
 
-	screen_saver2();
+	set_kb_handler(key_pressed);
+
+	draw_menu();
+	while (1)
+	{
+		if (mustRun != -1)
+		{
+			mustRun = -1;
+			
+			currentApp = selection;
+			running = 1;
+
+			clear_screen(COLOR_BLACK);
+			apps[currentApp].handler();
+			clear_screen(COLOR_BLACK);
+			draw_menu();
+
+			currentApp = -1;
+			mustRun = -1;
+		}
+	}
 }

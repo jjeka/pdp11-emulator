@@ -43,8 +43,8 @@ HEADERS  += mainwindow.h \
     bus.h \
     device.h \
     memory.h \
-    keycodes_.h \
-    keyboard.h
+    keyboard.h \
+    keycodestable.h
     instructions.h
 
 FORMS    += mainwindow.ui

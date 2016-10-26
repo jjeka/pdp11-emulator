@@ -8,7 +8,7 @@
 
 enum VcpuKeyCode
 {
-    #include "keycodes_.h"
+    #include "keycodestable.h"
 };
 
 #undef VCPU_KEYCODE

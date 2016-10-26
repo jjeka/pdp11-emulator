@@ -14,6 +14,8 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef uint16_t size_t;
 
+#define NULL 0
+
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) < (b)) ? (b) : (a))
 #define abs(a) (((a) < 0) ? (-(a)) : (a))

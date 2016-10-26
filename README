@@ -5,4 +5,6 @@ How to compile pdp11-gcc: http://ancientbits.blogspot.ru/2012/07/programming-bar
 
 To generate rom.bin file just run make inside tests folder
 
-To compile PDP 11 emulator you need QT Creator
+Utils: image header creator, font header creator
+
+QT Creator is required to compile PDP 11 emulator

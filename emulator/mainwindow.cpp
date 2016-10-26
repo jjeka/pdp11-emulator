@@ -255,7 +255,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
     switch(event->key())
     {
-        #include "keycodes_.h"
+        #include "keycodestable.h"
     }
 
     if (keyCode)
