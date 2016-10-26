@@ -33,8 +33,6 @@ int f(int x)
 
 void graph()
 {
-	draw_circle(50, 50, 20, 2, 255, 128);
-
 	int x;
 	for (x = 1; x < 100; x++)
 	{
@@ -46,19 +44,31 @@ void graph()
 	}
 }
 
-void exec()
+void screen_saver1()
 {
-	//anim();
-	//graph();
+	int i = 0;	
+	while(1)
+	{
+		int at = i % 16;
+		int bt = i / 16;
+		Color c = (bt % 2) ? at : (15 - at);
+		c *= 16;
+		i++;
+		draw_line(i%100, 0, 99, i%100, 2, c);
+		draw_line(i%100, 0, 0, 99 - i%100, 2, c);
+		draw_line(99 - i%100, 99, 0, 99 - i%100, 2, c);
+		draw_line(99, i%100, 99 - i%100, 99, 2, c);
+	}
+}
 
-	int a[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 };
-	draw_text(a, 12, 2, 255, 128, 1);
-
+void screen_saver2()
+{
 	int x0 = 15, y0 = 5, x1 = 20, y1 = 5, x2 = 5, y2 = 40;
 	int vx0 = 2, vy0 = 1, vx1 = 1, vy1 = -2, vx2 = -1, vy2 = 1;
 	int i = 0;
 	while (1)
 	{
+
 		x0 += vx0;
 		y0 += vy0;
 		x1 += vx1;
@@ -85,6 +95,19 @@ void exec()
 		draw_triangle(x0, y0, x1, y1, x2, y2, 2, c, TRANSPARENT);
 
 		i++;
-		//sleep(500);
 	}
+}
+
+void exec()
+{
+	draw_text("PDP11", 24, 10, 255, TRANSPARENT, 2);
+	draw_text("emulator", 28, 30, 210, TRANSPARENT, 1);
+	draw_text("BY", 40, 45, 150, TRANSPARENT, 2);
+	draw_text("NIKITENKO EVGENY", 2, 70, 255, TRANSPARENT, 1);
+	draw_text("IVANOV ALEXEY", 10, 80, 255, TRANSPARENT, 1);
+	draw_text("SAMARA OLEKSA", 10, 90, 255, TRANSPARENT, 1);
+	sleep(3000);
+	clear_screen(COLOR_BLACK);
+
+	screen_saver2();
 }

@@ -16,10 +16,6 @@
 #include "bus.h"
 #include "memory.h"
 
-// TODO: step fix
-// TODO: pos fix
-// TODO: bss fix
-
 #define VCPU_SP_REGISTER            6
 #define VCPU_PC_REGISTER            7
 #define VCPU_NUM_REGISTERS          8

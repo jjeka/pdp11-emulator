@@ -3,10 +3,10 @@
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
     bus_(this),
     registerNames_ { "r0", "r1", "r2", "r3", "r4", "r5", "sp", "pc" },
-    thread_(std::bind(&Vcpu::threadFunc_, this)),
     rom_(VCPU_ROM_OFFSET, VCPU_ROM_SIZE, BUS_ADDRESSREGION_READ, &bus_, "ROM"),
     ram_(VCPU_RAM_OFFSET, VCPU_RAM_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "RAM"),
-    fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB")
+    fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB"),
+    thread_(std::bind(&Vcpu::threadFunc_, this))
 {
     assert(VCPU_RAM_SIZE > 0);
 

@@ -9,3 +9,13 @@ void sleep(int t)
 		for (j = 0; j < 1000; j++);
 	}
 }
+
+void* memset(void* s, int c, size_t n)
+{
+	int i;
+	char* data = (char*) s;
+	for (i = 0; i < n; i++)
+		data[i] = c;
+
+	return s;
+}

@@ -208,7 +208,7 @@ void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int 
 				{
 					for (int xx = 0; xx < zoom; xx++)
 						for (int yy = 0; yy < zoom; yy++)
-							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, foreground);
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - zoom, foreground);
 				}
 			}
 			else
@@ -217,14 +217,14 @@ void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int 
 				{
 					for (int xx = 0; xx < zoom; xx++)
 						for (int yy = 0; yy < zoom; yy++)
-							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, background);
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - zoom, background);
 				}
 			}
 		}
 	}
 }
 
-void draw_text(int str[], int x0, int y0, Color foreground, Color background, int zoom)
+void draw_text(char str[], int x0, int y0, Color foreground, Color background, int zoom)
 {
 	int i;
 	for (i = 0; str[i]; i++)
