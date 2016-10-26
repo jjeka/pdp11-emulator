@@ -1,4 +1,5 @@
 #include "graphics.h"
+#include "utils.h"
 
 volatile unsigned char* const VRAM = (volatile unsigned char*) (32768);
 

@@ -11,6 +11,7 @@ SECTIONS
 {
 	.text :
 	{
+		obj/pdp/entry.s.o(.text)
 		*(.text)
 		_DATA_SECTION_SIZE = SIZEOF (.data);
 		_DATA_SECTION_START = SIZEOF (.text);

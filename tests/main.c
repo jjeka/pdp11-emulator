@@ -1,6 +1,7 @@
-#define PDP_ADD_SOURCE
-#include "pdp/main.h"
 #include "icon.h"
+#include "pdp/utils.h"
+#include "pdp/graphics.h"
+#include "pdp/keyboard.h"
 
 void key_pressed(unsigned data)
 {
