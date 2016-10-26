@@ -1,5 +1,6 @@
 #define PDP_ADD_SOURCE
 #include "pdp/main.h"
+#include "icon.h"
 
 void key_pressed(unsigned data)
 {
@@ -107,9 +108,9 @@ void screen_saver2()
 void exec()
 {
 	_set_kb_handler(key_pressed);
-	draw_text("PDP11", 24, 10, 255, TRANSPARENT, 2);
-	draw_text("emulator", 28, 30, 210, TRANSPARENT, 1);
-	draw_text("BY", 40, 45, 150, TRANSPARENT, 2);
+	
+	draw_image(25, 15, 50, 50, ICON_DATA);
+	draw_text("PDP11", 24, 5, 255, TRANSPARENT, 2);
 	draw_text("NIKITENKO EVGENY", 2, 70, 255, TRANSPARENT, 1);
 	draw_text("IVANOV ALEXEY", 10, 80, 255, TRANSPARENT, 1);
 	draw_text("SAMARA OLEKSA", 10, 90, 255, TRANSPARENT, 1);

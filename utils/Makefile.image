@@ -1,0 +1,2 @@
+.PHONY all:
+	g++ image.cpp CPngImage.cpp -lpng -lz -o out/image

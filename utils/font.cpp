@@ -7,7 +7,7 @@ int main(int argc, const char* argv[])
 {
 	if (argc != 2)
 	{
-		fprintf(stderr, "2 args required\n");
+		fprintf(stderr, "One arguments required\n");
 		return 1;
 	}
 
