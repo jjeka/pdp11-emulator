@@ -1,10 +1,12 @@
 #include "start.h"
+#include "keyboard.h"
 
 void _init_data();
 
 void _start2()
 {
 	_init_data();
+	_kb_init();
 	exec();
 }
 

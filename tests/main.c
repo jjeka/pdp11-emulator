@@ -1,6 +1,12 @@
 #define PDP_ADD_SOURCE
 #include "pdp/main.h"
 
+void key_pressed(unsigned data)
+{
+	//sleep(300);
+	draw_text("emulator", 28, 30, 210, TRANSPARENT, 1);
+}
+
 void anim()
 {
 	int tt = 1;
@@ -100,6 +106,7 @@ void screen_saver2()
 
 void exec()
 {
+	_set_kb_handler(key_pressed);
 	draw_text("PDP11", 24, 10, 255, TRANSPARENT, 2);
 	draw_text("emulator", 28, 30, 210, TRANSPARENT, 1);
 	draw_text("BY", 40, 45, 150, TRANSPARENT, 2);
