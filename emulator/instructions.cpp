@@ -63,12 +63,14 @@ bool instr_add(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw)
 bool instr_sub(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw)
 {
     uint32_t res = uint32_t(dst) + uint32_t(~uint16_t(src)) + 1;
-    dst = int16_t(res);
+
     psw.n = (sign(int16_t(res)) == -1);
     psw.z = (int16_t(res) == 0);
     psw.v = (sign(int16_t(dst)) != sign(int16_t(src)) &&
             sign(int16_t(res)) == sign(int16_t(src)));
     psw.c = ((res & (1 << 16)) != 0);
+
+    dst = int16_t(res);
 
     return true;
 }
@@ -371,7 +373,7 @@ bool instr_dec(MemRegion16& data, VcpuPSW& psw)
 
     psw.n = (int16_t(data) < 0);
     psw.z = (int16_t(data) == 0);
-    psw.v = (data == INT16_MAX);
+    psw.v = (int16_t(data) == INT16_MAX);
 
     return true;
 }
