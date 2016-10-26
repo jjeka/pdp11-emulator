@@ -238,3 +238,14 @@ void draw_text(char str[], int x0, int y0, Color foreground, Color background, i
 		draw_symbol(str[i], x0 + 6 * zoom * i, y0, foreground, background, zoom);
 	}
 }
+
+void draw_image(int x0, int y0, int sx, int sy, unsigned char data[])
+{
+	int x;
+	for (x = 0; x < sx; x++)
+	{
+		int y;
+		for (y = 0; y < sy; y++)
+			set_pixel(x0 + x, y0 + y, data[x * sy + y]);
+	}
+}
