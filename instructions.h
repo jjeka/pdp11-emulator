@@ -136,4 +136,6 @@ bool instr_rts(MemRegion16& reg, Vcpu& cpu);
 bool instr_mark(uint8_t n, Vcpu& cpu);
 bool instr_sob(MemRegion16& reg, uint8_t n, Vcpu& cpu);
 
+bool instr_rti(uint16_t instr, Vcpu& cpu);
+
 #endif // INSTRUCTIONS_H

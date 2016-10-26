@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "bus.h"
 #include "memory.h"
+#include "keyboard.h"
 
 // TODO: step fix
 // TODO: pos fix
@@ -35,8 +36,13 @@
 #define VCPU_FB_OFFSET              (VCPU_ROM_OFFSET + VCPU_ROM_SIZE)
 #define VCPU_FB_SIZE                (VCPU_DISPLAY_WIDTH * VCPU_DISPLAY_HEIGHT)
 #define VCPU_RAM_OFFSET             (VCPU_FB_OFFSET + VCPU_FB_SIZE)
-#define VCPU_RAM_SIZE               (0160000 - VCPU_RAM_OFFSET)
-// ||--- rom ---|--- fb ---|--- ram ---|--- devices ---| psw ||
+#define VCPU_RAM_SIZE               (0160000 + 01000 - VCPU_RAM_OFFSET)
+// ||--- rom ---|--- fb ---|--- ram (including interrupt vectors) ---|--- devices ---| psw ||
+#define VCPU_IV_OFFSET              0160000
+#define VCPU_IV_KEYBOARD_OFFSET     VCPU_IV_OFFSET
+
+#define VCPU_MEM_IO_OFFSET          0161000
+#define VCPU_KEYBOARD_STATUS_OFFSET VCPU_MEM_IO_OFFSET
 
 #define VCPU_NEGATIVE_FLAG_BIT      4
 #define VCPU_ZERO_FLAG_BIT          5
@@ -58,6 +64,8 @@
 
 #define VCPU_GET_REG(instr,begin) ((instr >> begin) & 7)
 #define VCPU_GET_ADDR_MODE(instr,begin) ((instr >> (begin + 3)) & 7)
+
+#define VCPU_KEYBOARD_INTERRUPT_PRIORITY        4
 
 enum VcpuStatus
 {
@@ -85,22 +93,20 @@ public:
     uint16_t& getRegister(unsigned n);
     uint16_t& getPC();
     uint16_t& getSP();
-    uint8_t& getPSW();
+    uint16_t& getPSW();
     unsigned getNRegisters();
     unsigned getDisplayWidth();
     unsigned getDisplayHeight();
     void* getFramebuffer();
 	unsigned getMemSize();
     Bus& getBus();
+    Keyboard& getKeyboard();
     std::string instrAtAddress(uint16_t address);
     void start();
     void reset();
     void reset(std::string romFile);
     void pause();
     void step();
-
-    void keyPressed(VcpuKeyCode keycode, bool shift, bool ctrl);
-    void keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl);
 
     void addBreakpoint(uint16_t address);
     void removeBreakpoint(uint16_t address);
@@ -117,15 +123,18 @@ public:
     bool getCarryFlag();
     void setCarryFlag(bool flag);
 
+    bool interrupt(unsigned priority, uint16_t vectorAddress);
+
 private:
     Bus bus_;
     VcpuStatus status_;
     std::array<std::string, VCPU_NUM_REGISTERS> registerNames_;
     uint16_t registers_[VCPU_NUM_REGISTERS];
-    uint8_t psw_;
+    uint16_t psw_;
     Memory rom_;
     Memory ram_;
     Memory fb_;
+    Keyboard keyboard_;
     std::set<uint16_t> breakpoints_;
 
     struct Instruction

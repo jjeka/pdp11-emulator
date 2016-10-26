@@ -6,7 +6,8 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     thread_(std::bind(&Vcpu::threadFunc_, this)),
     rom_(VCPU_ROM_OFFSET, VCPU_ROM_SIZE, BUS_ADDRESSREGION_READ, &bus_, "ROM"),
     ram_(VCPU_RAM_OFFSET, VCPU_RAM_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "RAM"),
-    fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB")
+    fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB"),
+    keyboard_(this)
 {
     assert(VCPU_RAM_SIZE > 0);
 
@@ -106,7 +107,7 @@ uint16_t& Vcpu::getSP()
     return getRegister(VCPU_SP_REGISTER);
 }
 
-uint8_t& Vcpu::getPSW()
+uint16_t& Vcpu::getPSW()
 {
     assert(status_ != VCPU_STATUS_FAIL_OPEN_ROM && status_ != VCPU_STATUS_WRONG_ROM_SIZE);
     return psw_;
@@ -515,24 +516,7 @@ void Vcpu::step()
         threadState_ = VCPU_THREAD_STATE_IDLE;
     }
 }
-
-void Vcpu::keyPressed(VcpuKeyCode keycode, bool shift, bool ctrl)
-{
-    assert(status_ == VCPU_STATUS_OK);
-    assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
-    assert(keycode != VCPU_KEYCODE_SHIFT || shift);
-
-
-}
-
-void Vcpu::keyReleased(VcpuKeyCode keycode, bool shift, bool ctrl)
-{
-    assert(status_ == VCPU_STATUS_OK);
-    assert(keycode != VCPU_KEYCODE_CONTROL || ctrl);
-    assert(keycode != VCPU_KEYCODE_SHIFT || shift);
-
-
-}
+\
 
 void Vcpu::addBreakpoint(uint16_t address)
 {
@@ -566,6 +550,8 @@ bool Vcpu::haltHit()
 
 void Vcpu::executeInstruction_()
 {
+    keyboard_.pollInterrupts();
+
     haltHit_ = false;
 
     uint16_t instr = getWordAtAddress(getPC());
@@ -743,6 +729,7 @@ uint16_t Vcpu::getWordAtAddress(uint16_t addr)
 
 unsigned Vcpu::getAddrByAddrMode_(int r, int mode, uint16_t incrementSize)
 {
+    fprintf(stderr, "%d %d %d\n", r, mode, int(incrementSize));
     unsigned addr = 0;
 
     switch (mode)
@@ -859,4 +846,28 @@ bool Vcpu::onJmp_(int r, int mode)
 Bus& Vcpu::getBus()
 {
     return bus_;
+}
+
+bool Vcpu::interrupt(unsigned priority, uint16_t vectorAddress)
+{
+    if (priority <= (getPSW() >> 5))
+        return false;
+
+    getSP() -= sizeof (uint16_t);
+    bus_.set16(getSP(), getPSW());
+    getSP() -= sizeof (uint16_t);
+    bus_.set16(getSP(), getPC());
+
+    fprintf(stderr, "0%o\n", vectorAddress);
+    fprintf(stderr, "0%o\n", getWordAtAddress(vectorAddress));
+
+    getPC() = getWordAtAddress(vectorAddress);
+    getPSW() = getWordAtAddress(vectorAddress + sizeof (uint16_t));
+
+    return true;
+}
+
+Keyboard& Vcpu::getKeyboard()
+{
+    return keyboard_;
 }

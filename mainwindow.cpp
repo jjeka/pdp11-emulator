@@ -5,6 +5,9 @@
 #include <QThread>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QKeyEvent>
+#include "keycodes.h"
+#include <QKeyEvent>
 
 #define FLAG_REGISTERS()        \
     FLAG_REGISTER(N, Negative)  \
@@ -64,6 +67,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui_->registersLayout->addRow("Flags", flagsLayout);
 
     createMenus_();
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void MainWindow::refreshCpuState_()
@@ -236,4 +240,24 @@ void MainWindow::createMenus_()
                                  "Github: <a href='https://github.com/jjeka/pdp11-emulator'>github.com/jjeka/pdp11-emulator</a>");
     });
     menuBar()->addAction(aboutAct);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    #define VCPU_KEYCODE(code)                  \
+        case Qt::Key_ ## code:                  \
+            keyCode = VCPU_KEYCODE_ ## code;    \
+            break;
+
+    #define VCPU_KEYCODE_(code, val) VCPU_KEYCODE(code)
+
+    uint8_t keyCode = 0;
+
+    switch(event->key())
+    {
+        #include "keycodes_.h"
+    }
+
+    if (keyCode)
+        vcpu_->getKeyboard().keyPressed(keyCode, event->modifiers() & Qt::ControlModifier, event->modifiers() & Qt::ShiftModifier);
 }

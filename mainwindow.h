@@ -55,6 +55,7 @@ public Q_SLOTS:
     virtual void on_stepButton_clicked();
 
     virtual void show();
+    virtual void keyPressEvent(QKeyEvent *event);
 
 private Q_SLOTS:
     void executionStopped_();
