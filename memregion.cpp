@@ -2,8 +2,8 @@
 #include "vcpu.h"
 
 MemRegion8::MemRegion8(unsigned addr, Vcpu* cpu) :
-    addr_(addr),
-    vcpu_(cpu)
+    vcpu_(cpu),
+    addr_(addr)
 {
 }
 
@@ -13,7 +13,7 @@ void MemRegion8::operator =(uint8_t val)
     {
         unsigned reg = addr_ & 0xffff;
         assert(reg < VCPU_NUM_REGISTERS);
-        vcpu_->getRegister(reg) = leconvert((leconvert(vcpu_->getRegister(reg)) & 0xff00) | uint16_t(val));
+        vcpu_->getRegister(reg) = uint16_t(val);
     }
     else if (addr_ == VCPU_FLAG_REGISTER_OFFSET)
         vcpu_->getPSW() = val;

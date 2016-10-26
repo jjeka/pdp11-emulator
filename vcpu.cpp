@@ -3,11 +3,11 @@
 Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) :
     bus_(this),
     registerNames_ { "r0", "r1", "r2", "r3", "r4", "r5", "sp", "pc" },
-    thread_(std::bind(&Vcpu::threadFunc_, this)),
     rom_(VCPU_ROM_OFFSET, VCPU_ROM_SIZE, BUS_ADDRESSREGION_READ, &bus_, "ROM"),
     ram_(VCPU_RAM_OFFSET, VCPU_RAM_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "RAM"),
     fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB"),
-    keyboard_(this)
+    keyboard_(this),
+    thread_(std::bind(&Vcpu::threadFunc_, this))
 {
     assert(VCPU_RAM_SIZE > 0);
 
@@ -407,7 +407,7 @@ void Vcpu::threadFunc_()
     while (threadState_ != VCPU_THREAD_STATE_DESTROY)
     {
         while (threadState_ == VCPU_THREAD_STATE_IDLE)
-            sleepMS(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         threadRunning_ = true;
         if (threadState_ == VCPU_THREAD_STATE_RUNNING)
@@ -476,7 +476,7 @@ void Vcpu::reset()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        sleepMS(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     memset(ram_.getData(), 0, VCPU_RAM_SIZE);
     memset(fb_.getData(), 0, VCPU_FB_SIZE);
@@ -498,7 +498,7 @@ void Vcpu::pause()
         threadState_ = VCPU_THREAD_STATE_IDLE;
 
     while (threadRunning_)
-        sleepMS(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void Vcpu::step()
@@ -511,7 +511,7 @@ void Vcpu::step()
         threadState_ = VCPU_THREAD_STATE_SINGLE_INSTRUCTION;
 
         while (threadState_ == VCPU_THREAD_STATE_SINGLE_INSTRUCTION)
-            sleepMS(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         threadState_ = VCPU_THREAD_STATE_IDLE;
     }

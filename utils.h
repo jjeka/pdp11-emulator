@@ -10,6 +10,4 @@ int32_t sign(int32_t x);
 
 uint16_t leconvert(uint16_t x);
 
-void sleepMS(int ms);
-
 #endif // UTILS_H

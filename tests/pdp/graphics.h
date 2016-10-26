@@ -20,6 +20,6 @@ void draw_circle(int x0, int y0, int r, int size, Color color, Color fillColor);
 void draw_rectangle(int x1, int y1, int x2, int y2, int size, Color color, Color fillColor);
 void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, int size, Color color, Color fillColor);
 void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int zoom);
-void draw_text(int str[], int x0, int y0, Color foreground, Color background, int zoom);
+void draw_text(char str[], int x0, int y0, Color foreground, Color background, int zoom);
 
 #endif // PDP_GRAPHICS

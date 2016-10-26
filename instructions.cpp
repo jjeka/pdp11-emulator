@@ -15,9 +15,9 @@ bool instr_mov(MemRegion16& dst, MemRegion16& src, VcpuPSW& psw)
 
 bool instr_movb(MemRegion8& dst, MemRegion8& src, VcpuPSW& psw)
 {
-    dst = uint8_t (src);
-    psw.n = (int16_t(src) < 0);
-    psw.z = (int16_t(src) == 0);
+    dst = src;
+    psw.n = (int8_t(src) < 0);
+    psw.z = (int8_t(src) == 0);
     psw.v = false;
 
     return true;

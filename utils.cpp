@@ -16,9 +16,3 @@ uint16_t leconvert(uint16_t x)
     #error "Unable to detect hos endianness"
 #endif
 }
-
-//TODO: c++11 sleep
-void sleepMS(int ms)
-{
-    return QThread::msleep(ms);
-}

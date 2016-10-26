@@ -29,18 +29,86 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 	int xmax = min(max(x1, x2), SCREEN_SIZE_X);
 	int ymin = max(min(y1, y2), 0);
 	int ymax = min(max(y1, y2), SCREEN_SIZE_Y);
-	unsigned size2 = ((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) * size * size;
+	int dx = xmax - xmin;
+	int dy = ymax - ymin;
+	unsigned size2 = (dx*dx + dy*dy) * size * size;
 
-	int x;
-	for (x = xmin; x <= xmax; x++)
-	{
-		int y;
-		for (y = ymin; y <= ymax; y++)
+	int x, y;
+	if (dx > dy)
+	{	
+		if ((x1 - x2) * (y1 - y2) > 0)
 		{
-			unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
-			if (abs(s) < 128 && 4 * s * s <= size2)
+			int yc = ymin;
+			for (x = xmin; x <= xmax; x++)
 			{
-				set_pixel(x, y, c);
+				if (yc * dx < ymin * dx + dy * (x - xmin) - 1)
+					yc++;
+			
+				for (y = yc - size / 2 - 1; y <= yc + size / 2 + 1; y++)
+				{
+					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
+					if (abs(s) < 128 && 4 * s * s <= size2)
+					{
+						set_pixel(x, y, c);
+					}
+				}
+			}
+		}
+		else
+		{
+			int yc = ymax;
+			for (x = xmin; x <= xmax; x++)
+			{
+				if (yc * dx > ymin * dx + dy * (xmax - x) + 1)
+					yc--;
+			
+				for (y = yc - size / 2 - 1; y <= yc + size / 2 + 1; y++)
+				{
+					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
+					if (abs(s) < 128 && 4 * s * s <= size2)
+					{
+						set_pixel(x, y, c);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		if ((x1 - x2) * (y1 - y2) > 0)
+		{
+			int xc = xmin;
+			for (y = ymin; y <= ymax; y++)
+			{
+				if (xc * dy < xmin * dy + dx * (y - ymin) - 1)
+					xc++;
+			
+				for (x = xc - size / 2 - 1; x <= xc + size / 2 + 1; x++)
+				{
+					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
+					if (abs(s) < 128 && 4 * s * s <= size2)
+					{
+						set_pixel(x, y, c);
+					}
+				}
+			}
+		}
+		else
+		{
+			int xc = xmax;
+			for (y = ymin; y <= ymax; y++)
+			{
+				if (xc * dy > xmin * dy + dx * (ymax - y) + 1)
+					xc--;
+			
+				for (x = xc - size / 2 - 1; x <= xc + size / 2 + 1; x++)
+				{
+					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
+					if (abs(s) < 128 && 4 * s * s <= size2)
+					{
+						set_pixel(x, y, c);
+					}
+				}
 			}
 		}
 	}
@@ -140,7 +208,7 @@ void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int 
 				{
 					for (int xx = 0; xx < zoom; xx++)
 						for (int yy = 0; yy < zoom; yy++)
-							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, foreground);
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - zoom, foreground);
 				}
 			}
 			else
@@ -149,14 +217,14 @@ void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int 
 				{
 					for (int xx = 0; xx < zoom; xx++)
 						for (int yy = 0; yy < zoom; yy++)
-							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - 1, background);
+							set_pixel(x0 + x * zoom + xx, y0 + y * zoom + yy - zoom, background);
 				}
 			}
 		}
 	}
 }
 
-void draw_text(int str[], int x0, int y0, Color foreground, Color background, int zoom)
+void draw_text(char str[], int x0, int y0, Color foreground, Color background, int zoom)
 {
 	int i;
 	for (i = 0; str[i]; i++)
