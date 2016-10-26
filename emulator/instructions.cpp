@@ -349,7 +349,7 @@ bool instr_inc(MemRegion16& data, VcpuPSW& psw)
 
     psw.n = (int16_t(data) < 0);
     psw.z = (int16_t(data) == 0);
-    psw.v = (data == INT16_MIN);
+    psw.v = (int16_t(data) == INT16_MIN);
 
     return true;
 }
