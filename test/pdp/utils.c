@@ -12,7 +12,7 @@ void sleep(int t)
 
 void* memset(void* s, int c, size_t n)
 {
-	int i;
+	size_t i;
 	char* data = (char*) s;
 	for (i = 0; i < n; i++)
 		data[i] = c;

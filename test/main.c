@@ -17,9 +17,7 @@ void animation()
 	int tt = 1;
 	while (running)
 	{
-		int at = tt % 500;
-		int bt = tt / 500;
-		int t = (bt%2) ? tt : (500 - tt);
+		int t = ((tt / 500) % 2) ? tt : (500 - tt);
 
 		int x;
 		for (x = 0; x < 100; x++)
@@ -81,30 +79,185 @@ void screensaver2()
 		if (y2 <= 0 || y2 > SCREEN_SIZE_Y)
 			vy2 = -vy2;
 
-		int at = i % 256;
-		int bt = i / 256;
-		Color c = (bt % 2) ? i : (255 - i);
+		Color c = ((i / 256) % 2) ? i : (255 - i);
 		draw_triangle(x0, y0, x1, y1, x2, y2, 2, c, TRANSPARENT);
 
 		i++;
 	}
 }
 
+void invert_rect(int x0, int y0, int sx, int sy)
+{
+	int x;
+	for (x = x0; x < x0 + sx; x++)
+	{
+		int y;
+		for (y = y0; y < y0 + sy; y++)
+		{
+			set_pixel(x, y, 255 - get_pixel(x, y));
+		}
+	}
+}
+
 int te_x = 0;
 int te_y = 0;
+int te_t = 0;
+int te_inverted = 0;
+
+void text_editor_remove_cursor()
+{
+	if (te_inverted)
+	{	
+		int x = te_x;
+		int y = te_y;
+		invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
+	}
+}
+
+void text_editor_update_cursor()
+{
+	int x = te_x;
+	int y = te_y;
+	invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
+	te_t = 0;
+	te_inverted = 1;
+}
+
 void text_editor_key_pressed(unsigned key)
 {
-	draw_symbol((char) key, 1 + 6 * te_x, 1 + 8 * te_y, 255, TRANSPARENT, 1);
-	te_x++;
+	if (key == 5 /* return */)
+	{
+		text_editor_remove_cursor();
+
+		te_x = 0;
+		te_y++;
+
+		if (te_y >= 12)
+			te_y = 0;
+
+		text_editor_update_cursor();
+	}
+	else if (key == 1 /* up */)
+	{
+		text_editor_remove_cursor();
+
+		te_y--;
+		if (te_y < 0)
+			te_y = 11;
+
+		text_editor_update_cursor();
+	}
+	else if (key == 2 /* down */)
+	{
+		text_editor_remove_cursor();
+
+		te_y++;
+		if (te_y >= 12)
+			te_y = 0;
+
+		text_editor_update_cursor();
+	}
+	else if (key == 3 /* left */)
+	{
+		text_editor_remove_cursor();
+
+		te_x--;
+		if (te_x < 0)
+			te_x = 15;
+
+		text_editor_update_cursor();
+	}
+	else if (key == 4 /* right */)
+	{
+		text_editor_remove_cursor();
+
+		te_x++;
+		if (te_x >= 16)
+			te_x = 0;
+
+		text_editor_update_cursor();
+	}
+	else if (key == 6 /* backspace */)
+	{
+		text_editor_remove_cursor();
+
+		te_x--;
+		if (te_x < 0)
+		{
+			te_x = 15;
+			te_y--;
+
+			if (te_y < 0)
+				te_y = 11;
+		}
+
+		int x = te_x;
+		int y = te_y;
+		draw_rectangle(1 + 6 * x, 1 + 8 * y, 7 + 6 * x, 9 + 8 * y, 0, 0, 0);
+
+		text_editor_update_cursor();
+	}
+	else if (key == 7 /* delete */)
+	{
+		text_editor_remove_cursor();
+
+		int x = te_x;
+		int y = te_y;
+		x++;
+		if (x >= 16)
+		{
+			x = 0;
+			y++;
+
+			if (y == 12)
+				y = 0;
+		}
+
+		draw_rectangle(1 + 6 * x, 1 + 8 * y, 7 + 6 * x, 9 + 8 * y, 0, 0, 0);
+
+		text_editor_update_cursor();
+	}
+	else
+	{
+		int x = te_x;
+		int y = te_y;
+
+		te_x++;
+		if (te_x >= 16)
+		{
+			te_x = 0;
+			te_y++;
+
+			if (te_y == 12)
+				te_y = 0;
+		}
+
+		draw_symbol((key & 0xFF), 2 + 6 * x, 2 + 8 * y, 255, 0, 1);
+
+		draw_rectangle(1 + 6 * x, 1 + 8 * y, 7 + 6 * x, 9 + 8 * y, 0, 0, TRANSPARENT);
+
+		text_editor_update_cursor();
+	}
 }
 
 void text_editor()
 {
 	te_x = 0;
 	te_y = 0;
+	te_inverted = 0;
+
 	while (running)
 	{
-		
+		if (te_t == 500)
+		{
+			int x = te_x;
+			int y = te_y;
+			invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
+			te_t = 0;
+			te_inverted = !te_inverted;
+		}
+		sleep(1);
+		te_t++;
 	}
 }
 
@@ -191,7 +344,7 @@ void key_pressed(unsigned key)
 }
 
 void exec()
-{	
+{
 	draw_about();
 	sleep(3000);
 	clear_screen(COLOR_BLACK);

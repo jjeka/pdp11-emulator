@@ -48,7 +48,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 				for (y = yc - size / 2 - 1; y <= yc + size / 2 + 1; y++)
 				{
 					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
-					if (abs(s) < 128 && 4 * s * s <= size2)
+					if (s < 128 && 4 * s * s <= size2)
 					{
 						set_pixel(x, y, c);
 					}
@@ -66,7 +66,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 				for (y = yc - size / 2 - 1; y <= yc + size / 2 + 1; y++)
 				{
 					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
-					if (abs(s) < 128 && 4 * s * s <= size2)
+					if (s < 128 && 4 * s * s <= size2)
 					{
 						set_pixel(x, y, c);
 					}
@@ -87,7 +87,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 				for (x = xc - size / 2 - 1; x <= xc + size / 2 + 1; x++)
 				{
 					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
-					if (abs(s) < 128 && 4 * s * s <= size2)
+					if (s < 128 && 4 * s * s <= size2)
 					{
 						set_pixel(x, y, c);
 					}
@@ -105,7 +105,7 @@ void draw_line(int x1, int y1, int x2, int y2, int size, Color c)
 				for (x = xc - size / 2 - 1; x <= xc + size / 2 + 1; x++)
 				{
 					unsigned s = (x1 - x) * (y2 - y) - (x2 - x) * (y1 - y);
-					if (abs(s) < 128 && 4 * s * s <= size2)
+					if (s < 128 && 4 * s * s <= size2)
 					{
 						set_pixel(x, y, c);
 					}
@@ -152,7 +152,7 @@ void draw_rectangle(int x1, int y1, int x2, int y2, int size, Color color, Color
 				set_pixel(x, y, color);
 			else if ((y - ymin <= size || ymax - y <= size) && color != TRANSPARENT)
 				set_pixel(x, y, color);
-			else
+			else if (fillColor != TRANSPARENT)
 				set_pixel(x, y, fillColor);
 		}
 	}
@@ -191,7 +191,7 @@ void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, int size, Col
 	}
 }
 
-void draw_symbol(int c, int x0, int y0, Color foreground, Color background, int zoom)
+void draw_symbol(char c, int x0, int y0, Color foreground, Color background, int zoom)
 {
 	if (c < 0)
 		return;

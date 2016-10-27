@@ -5,7 +5,7 @@ SIZE=32768
 TOOLCHAIN_PREFIX=pdp11-aout-
 CC=$(TOOLCHAIN_PREFIX)gcc
 LD=$(TOOLCHAIN_PREFIX)ld
-C_FLAGS=-O0 -m40 -nostdlib -Wall
+C_FLAGS=-O0 -m40 -nostdlib -Werror -Wall -Wextra
 LD_FLAGS=-T ldaout.cmd -M
 
 SRC=$(shell find * -type f -name '*\.[sc]')
