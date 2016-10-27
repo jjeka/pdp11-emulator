@@ -116,6 +116,8 @@ void text_editor_remove_cursor()
 
 void text_editor_update_cursor()
 {
+	int x = te_x;
+	int y = te_y;
 	invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
 	te_t = 0;
 	te_inverted = 1;
