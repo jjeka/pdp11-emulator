@@ -107,7 +107,7 @@ int te_inverted = 0;
 void text_editor_remove_cursor()
 {
 	if (te_inverted)
-	{	
+	{
 		int x = te_x;
 		int y = te_y;
 		invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
@@ -116,8 +116,6 @@ void text_editor_remove_cursor()
 
 void text_editor_update_cursor()
 {
-	int x = te_x;
-	int y = te_y;
 	invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
 	te_t = 0;
 	te_inverted = 1;
@@ -250,9 +248,7 @@ void text_editor()
 	{
 		if (te_t == 500)
 		{
-			int x = te_x;
-			int y = te_y;
-			invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
+			invert_rect(1 + 6 * te_x, 1 + 8 * te_y, 7, 9);
 			te_t = 0;
 			te_inverted = !te_inverted;
 		}
