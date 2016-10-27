@@ -177,42 +177,25 @@ void text_editor_key_pressed(unsigned key)
 
 		text_editor_update_cursor();
 	}
-	else if (key == 6 /* backspace */)
+	else if (key == 6 /* backspace */ || key == 7 /* delete */)
 	{
 		text_editor_remove_cursor();
 
-		te_x--;
-		if (te_x < 0)
+		if (key == 6 /* backspace */)
 		{
-			te_x = 15;
-			te_y--;
+			te_x--;
+			if (te_x < 0)
+			{
+				te_x = 15;
+				te_y--;
 
-			if (te_y < 0)
-				te_y = 11;
+				if (te_y < 0)
+					te_y = 11;
+			}
 		}
 
 		int x = te_x;
 		int y = te_y;
-		draw_rectangle(1 + 6 * x, 1 + 8 * y, 7 + 6 * x, 9 + 8 * y, 0, 0, 0);
-
-		text_editor_update_cursor();
-	}
-	else if (key == 7 /* delete */)
-	{
-		text_editor_remove_cursor();
-
-		int x = te_x;
-		int y = te_y;
-		x++;
-		if (x >= 16)
-		{
-			x = 0;
-			y++;
-
-			if (y == 12)
-				y = 0;
-		}
-
 		draw_rectangle(1 + 6 * x, 1 + 8 * y, 7 + 6 * x, 9 + 8 * y, 0, 0, 0);
 
 		text_editor_update_cursor();
