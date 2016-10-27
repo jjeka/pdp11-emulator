@@ -167,7 +167,7 @@ private:
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();
     bool isByteInstruction_(uint16_t instr);
-    unsigned getAddrByAddrMode_(int r, int mode, uint16_t incrementSize);
+    unsigned getAddrByAddrMode_(int r, int mode);
     void toOctal_(uint16_t n, char* str);
 
     void onHalt_();

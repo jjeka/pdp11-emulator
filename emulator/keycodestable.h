@@ -38,6 +38,7 @@ VCPU_KEYCODE(9)
 
 VCPU_KEYCODE_(Minus, '-')
 VCPU_KEYCODE_(Equal, '=')
+VCPU_KEYCODE_(Space, ' ')
 
 VCPU_KEYCODE_(Up, 1)
 VCPU_KEYCODE(Down)
