@@ -250,7 +250,9 @@ void text_editor()
 	{
 		if (te_t == 500)
 		{
-			invert_rect(1 + 6 * te_x, 1 + 8 * te_y, 7, 9);
+			int x = te_x;
+			int y = te_y;
+			invert_rect(1 + 6 * x, 1 + 8 * y, 7, 9);
 			te_t = 0;
 			te_inverted = !te_inverted;
 		}
