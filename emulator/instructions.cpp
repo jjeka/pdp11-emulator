@@ -783,9 +783,8 @@ bool instr_jsr(uint16_t instr, MemRegion16& reg, MemRegion16& /*dst*/, Vcpu& cpu
                     VCPU_GET_ADDR_MODE(instr, 0) == VCPU_ADDR_MODE_INDEX_DEFERRED)) ?
                 sizeof (uint16_t) : 0; /* pc can be already shifted */
     cpu.getPC() = oldPC - pcShift;
-    cpu.onJmp_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
 
-    return true;
+    return cpu.onJmp_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
 }
 
 bool instr_rts(MemRegion16& reg, Vcpu& cpu)
