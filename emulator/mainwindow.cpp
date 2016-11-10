@@ -199,6 +199,15 @@ void MainWindow::checkVcpuStatus_()
     case VCPU_STATUS_INVALID_INSTRUCTION:
         QMessageBox::critical(this, "Error", "Attempt to execute an invalid instruction. Unable to continue execution");
         break;
+    case VCPU_STATUS_INVALID_OPCODE:
+        QMessageBox::critical(this, "Error", "Attempt to execute an instruction with invalid opcode. Unable to continue execution");
+        break;
+    case VCPU_STATUS_INVALID_MEMORY_ACCESS:
+        QMessageBox::critical(this, "Error", "Invalid memory access. Unable to continue execution");
+        break;
+    case VCPU_STATUS_INVALID_PC:
+        QMessageBox::critical(this, "Error", "Invalid (odd) PC. Unable to continue execution");
+        break;
     }
 }
 
