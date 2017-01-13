@@ -552,6 +552,9 @@ void Vcpu::executeInstruction_()
 
     haltHit_ = false;
 
+    //+++ conveyor
+    // this is instruction fetch
+    // +2 ticks - set adress & get response
     uint16_t instr = getWordAtAddress(getPC());
 
     if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
@@ -600,7 +603,7 @@ void Vcpu::executeInstruction_()
         }
 
     }
-        break;
+    break;
 
     case VCPU_INSTR_TYPE_OPERAND_REGISTER:
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
