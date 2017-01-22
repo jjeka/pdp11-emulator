@@ -81,7 +81,7 @@
  * 6) в нашей модели также нужно отслеживать занятость АЛУ - поскольку перемена состояния конвейера может происходить посредине исполнения инструкции
  *    на АЛУ, мы должны гарантировать, что при рассчете прыжка те инструкции, которые вычислялись, все еще будут вычисляться. Собственно, сделаем это
  *    в лоб: после того, как мы вычислили длину прыжка, в первую очередь продвинем по конвейеру те инструкции, у которых уже есть прогресс на АЛУ;
- *    только затем продвинем все остальные.
+ *    только затем продвинем все остальные. (DISCUSS: норм подход?)
  *
  * Из вышесказанного запишем то, как же будет выглядеть класс конвейера.
  *
@@ -102,7 +102,7 @@ uint64_t conveyor::add_instruction(instr_model *instr)
     while (!can_insert_instr)
     {
         can_insert_instr = true;
-        for (int i = 0; i < conv_model_.size(); i++)
+        for (int i = 0; i < (int) conv_model_.size(); i++)
             if (conv_model_[i]->conv_phase == 0)
             {
                 can_insert_instr = false;
@@ -120,58 +120,41 @@ void conveyor::advance()
 {
     if (conv_model_.empty())
         return;
-    //std::vector<uint64_t> delayed_instructions;
-    //int min_ticks_to_adv = INT32_MAX;
+
     instr_model * hyp_instr = conv_model_[0]; //hypothetical instruction to advance; we try with instruction awaiting it's fetch
-    //bool instr_chosen = false; //have we chosen instruction to advance or not?
-    /*while (!instr_chosen)
-    {
-        instr_chosen = true;
-        for (int i = 0; i < conv_model_.size(); i++)
-        {
-            bool is_delayed = false;
-            for (int j = 0; j < delayed_instructions.size(); j++)
-                if (delayed_instructions[j] == conv_model_[i])
-                {
-                    is_delayed = true;
-                    break;
-                }
-            if (is_delayed)
-                continue;
 
-            if ((conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] - conv_model_[i]->curr_phase_advance) <
-                (hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance))
-            {//jump point is closer in time; gotta check memory collisions
+    int alu_occupied = 0;
+    bool bus_occupied = false;
 
-            }
-        }
-    }*/
-    for (int i = 0; i < conv_model_.size(); i++)
+    for (int i = 0; i < (int) conv_model_.size(); i++)
+        if (conv_model_[i]->conv_phase == 3 && conv_model_[i]->curr_phase_advance != 0)
+            alu_occupied++;
+
+    for (int i = 0; i < (int) conv_model_.size(); i++)
     {//looking for a closer jump point
 
         if ((conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] - conv_model_[i]->curr_phase_advance) <
             (hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance))
-        {//jump point is closer in time; gotta check memory collisions
+        {//jump point is closer in time; gotta check memory collisions and that there is a free ALU if we want to start to calculate
             bool no_collision = true;
+
+            if (conv_model_[i]->conv_phase == 3 && conv_model_[i]->curr_phase_advance == 0 && alu_occupied >= alu_num_)
+                no_collision = false;
 
             if (conv_model_[i]->conv_phase == 4)
             {// collision is possible only on write-back
 
-                for (int j = 0; j < conv_model_.size(); j++)
+                for (int j = 0; j < (int) conv_model_.size(); j++)
                 {
 
                     if (conv_model_[j]->instr_num >= conv_model_[i]->instr_num)
                         continue; //instruction happens after our chosen; no collision
                     //collision: we try to write into area from which previous instruction reads; lost causality
 
-
-
-
-
-                    for (int ii = 0; ii < conv_model_[i]->dependencies_out.size(); ii++)
+                    for (int ii = 0; ii < (int) conv_model_[i]->dependencies_out.size(); ii++)
                     {
 
-                        for (int jj = 0; jj < conv_model_[j]->dependencies_in.size(); jj++)
+                        for (int jj = 0; jj < (int) conv_model_[j]->dependencies_in.size(); jj++)
                         {
 
                             if (conv_model_[i]->dependencies_out[ii] == conv_model_[j]->dependencies_in[jj])
@@ -190,7 +173,7 @@ void conveyor::advance()
             }
 
             if (no_collision)
-            {//so, our jump point is closer and no collisions are present
+            {//so, our jump point is closer and no collisions are present and there is free ALU if we need one
                 hyp_instr = conv_model_[i];
             }
         }
@@ -202,15 +185,116 @@ void conveyor::advance()
     int advance_ticks = hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance;
     //number of ticks by which conveyor advances
 
-    bool bus_occupied = false;
-    int alu_occupied = 0;
-    //occupation indicators
-    cur_ticks_ += advance_ticks;
-    if (hyp_instr->conv_phase == 1 || hyp_instr->conv_phase == 3 || hyp_instr->conv_phase == 5)
+    cur_ticks_ += (uint64_t) advance_ticks; //track advancement
+
+/*    if (hyp_instr->conv_phase == 0 || hyp_instr->conv_phase == 2 || hyp_instr->conv_phase == 4)
         bus_occupied = true; //our instruction performs operation fetch or operand fetch or write-back
-    if (hyp_instr->conv_phase == 4)
-        alu_occupied
+    if (hyp_instr->conv_phase == 3)
+        alu_occupied ++;
+
+    hyp_instr->conv_phase ++; //our instruction passes to the next conveyor stage
+*/
+    for (int i = 0; i < (int)conv_model_.size(); i++)
+        conv_model_[i]->has_advanced = false; //no instruction has advanced yet
+
+    /*if (hyp_instr->conv_phase >= 5)
+    {//this instruction's execution have finished; pop it from conveyor
+        int i;
+        for (i = 0; i < (int)conv_model_.size(); i++)
+            if (conv_model_[i] == hyp_instr)
+                break;
+        conv_model_.erase(conv_model_.begin() + i);
+    }*/
+
+    for (int i = 0; i < (int)conv_model_.size(); i++)
+    {//we look at our instructions and try to advance their execution by advance_ticks;  first we try unfinished instructions
+
+        if (conv_model_[i]->curr_phase_advance == 0) //if execution of phase has not began, we advance it in next iteration
+            continue;
+
+        //first we occupy bus if necessary and if possible
+        if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
+        {
+            if (!bus_occupied)
+                bus_occupied = true; //if we have to use bus and its free - occupy it
+            else
+            {//if bus is occupied - we can't advance
+                conv_model_[i]->has_advanced = true;
+                continue;
+            }
+        }
+
+        //occupy one ALU if necessary
+        if (conv_model_[i]->conv_phase == 3)
+        {
+            if (alu_occupied < alu_num_)
+                alu_occupied ++; //if we have to use ALU and one is free - occupy it
+            else
+            {//no free ALU - we can't advance
+                conv_model_[i]->has_advanced = true;
+                continue;
+            }
+        }
+
+        conv_model_[i]->curr_phase_advance += advance_ticks;
+
+        if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
+        {//if current phase is finished - transfer to the next one
+            conv_model_[i]->conv_phase++;
+            conv_model_[i]->curr_phase_advance = 0;
+
+            if (conv_model_[i]->conv_phase > 4)
+            {//we advanced past last phase - pop instruction from conveyor and free occupied by support structures memory
+                free(conv_model_[i]);
+                conv_model_.erase(conv_model_.begin() + i);
+            }
+        }
+        conv_model_[i]->has_advanced = true;
+    }
+
+    for (int i = 0; i < (int)conv_model_.size(); i++)
+    {
+        if (conv_model_[i]->has_advanced)
+            continue;
+        if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
+        {
+            if (!bus_occupied)
+                bus_occupied = true; //if we have to use bus and its free - occupy it
+            else
+            {//if bus is occupied - we can't advance
+                conv_model_[i]->has_advanced = true;
+                continue;
+            }
+        }
+         //occupy one ALU if necessary
+        if (conv_model_[i]->conv_phase == 3)
+        {
+            if (alu_occupied < alu_num_)
+                alu_occupied ++; //if we have to use ALU and one is free - occupy it
+            else
+            {//no free ALU - we can't advance
+                conv_model_[i]->has_advanced = true;
+                continue;
+            }
+        }
+        conv_model_[i]->curr_phase_advance += advance_ticks;
+
+        if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
+        {//if current phase is finished - transfer to the next one
+            conv_model_[i]->conv_phase++;
+            conv_model_[i]->curr_phase_advance = 0;
+
+            if (conv_model_[i]->conv_phase > 4)
+            {//we advanced past last phase - pop instruction from conveyor and free occupied by support structures memory
+                free(conv_model_[i]);
+                conv_model_.erase(conv_model_.begin() + i);
+            }
+        }
+        conv_model_[i]->has_advanced = true;
+    }
+
 }
 uint64_t conveyor::get_ticks()
 {
+    return cur_ticks_;
 }

@@ -21,6 +21,7 @@ struct instr_model
     int ticks_to_fetch;
     int ticks_to_writeback;
     int conv_phase;
+    bool has_advanced;
 };
 
 class conveyor
