@@ -78,6 +78,11 @@
  * 5) заметим, что при продвижении выбирается ближайшая точка завершения этапа некоторой инструкции; при этом, если мы выбрали продвигать
  *    этап, зависимый от шины, то одновременно продвигается этап, зависимый от АЛУ - и наоборот.
  *
+ * 6) в нашей модели также нужно отслеживать занятость АЛУ - поскольку перемена состояния конвейера может происходить посредине исполнения инструкции
+ *    на АЛУ, мы должны гарантировать, что при рассчете прыжка те инструкции, которые вычислялись, все еще будут вычисляться. Собственно, сделаем это
+ *    в лоб: после того, как мы вычислили длину прыжка, в первую очередь продвинем по конвейеру те инструкции, у которых уже есть прогресс на АЛУ;
+ *    только затем продвинем все остальные.
+ *
  * Из вышесказанного запишем то, как же будет выглядеть класс конвейера.
  *
  * */
@@ -193,6 +198,18 @@ void conveyor::advance()
     //so, we found closest jump point - closest event in our conveyor model. It's time to advance our conveyor accordingly
     //our instruction is first to switch to the next phase; therefore, all other instruction will advance inside their phases
     //(considering bus and ALU occupation)
+
+    int advance_ticks = hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance;
+    //number of ticks by which conveyor advances
+
+    bool bus_occupied = false;
+    int alu_occupied = 0;
+    //occupation indicators
+    cur_ticks_ += advance_ticks;
+    if (hyp_instr->conv_phase == 1 || hyp_instr->conv_phase == 3 || hyp_instr->conv_phase == 5)
+        bus_occupied = true; //our instruction performs operation fetch or operand fetch or write-back
+    if (hyp_instr->conv_phase == 4)
+        alu_occupied
 }
 uint64_t conveyor::get_ticks()
 {
