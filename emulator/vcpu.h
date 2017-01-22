@@ -16,6 +16,7 @@
 #include "bus.h"
 #include "memory.h"
 #include "keyboard.h"
+#include "conveyor.h"
 
 #define VCPU_SP_REGISTER            6
 #define VCPU_PC_REGISTER            7
@@ -147,6 +148,8 @@ private:
 
     std::function<void()> executionStoppedCallback_;
     std::thread thread_;
+
+    conveyor conv_;
 
     enum VcpuThreadState
     {

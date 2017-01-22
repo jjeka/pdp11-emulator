@@ -7,7 +7,8 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
     ram_(VCPU_RAM_OFFSET, VCPU_RAM_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "RAM"),
     fb_(VCPU_FB_OFFSET, VCPU_FB_SIZE, BUS_ADDRESSREGION_READ | BUS_ADDRESSREGION_WRITE, &bus_, "FB"),
     keyboard_(this),
-    thread_(std::bind(&Vcpu::threadFunc_, this))
+    thread_(std::bind(&Vcpu::threadFunc_, this)),
+    conv_()
 {
     assert(VCPU_RAM_SIZE > 0);
 
@@ -572,6 +573,10 @@ void Vcpu::executeInstruction_()
 
     assert(instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
     assert(instructions_[instr].callback);
+
+    instr_model * intsr_m = new(instr_model); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
+                                              //    memory region dependencies, operand type
+    intsr_m->type = instructions_[instr].type;
 
     uint16_t prevPC = getPC();
     getPC() += sizeof (uint16_t);
