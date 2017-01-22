@@ -574,10 +574,10 @@ void Vcpu::executeInstruction_()
     assert(instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
     assert(instructions_[instr].callback);
 
-    instr_model * intsr_m = new(instr_model); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
+    instr_model * instr_m = new(instr_model); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
                                               //    memory region dependencies, operand type
-    intsr_m->type = instructions_[instr].type;
-
+    instr_m->type = instructions_[instr].type;
+    instr_m->instr = instr;
     uint16_t prevPC = getPC();
     getPC() += sizeof (uint16_t);
 
@@ -589,7 +589,8 @@ void Vcpu::executeInstruction_()
     {
         unsigned srcAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6));
         unsigned dstAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
-
+        //+++ grab addresses and insert them into instr_model structure
+        //+++ also grab address modes - it depends on addressing mode how much time takes a fetch or a writeback
         if (isByteInstruction_(instr))
         {
             MemRegion8 srcRegion(srcAddr, this);
@@ -618,7 +619,7 @@ void Vcpu::executeInstruction_()
         MemRegion16 reg2Region(getAddrByAddrMode_(
                                  (VCPU_GET_REG(instr, 6) % 2 == 0) ? (VCPU_GET_REG(instr, 6) + 1) : VCPU_GET_REG(instr, 6),
                                  VCPU_ADDR_MODE_REGISTER), this);
-
+        //+++ grab addresses and insert them into instr_model structure - its ok that one of operands is a register
         if (instructions_[instr].type == VCPU_INSTR_TYPE_OPERAND_REGISTER)
         {
             if (!((vcpu_instr_operand_register_callback*) instructions_[instr].callback)
@@ -637,7 +638,7 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_SINGLE_REGISTER:
     {
         MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_ADDR_MODE_REGISTER), this);
-
+        //+++ grab addresses and insert them into instr_model structure
         if (!((vcpu_instr_single_register_callback*) instructions_[instr].callback)
                 (regRegion, *this))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
@@ -647,7 +648,7 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_SINGLE_OPERAND:
     {
         unsigned addr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
-
+        //+++ grab addresses and insert them into instr_model structure
         if (isByteInstruction_(instr))
         {
             MemRegion8 region(addr, this);
@@ -674,7 +675,7 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_BRANCH:
     {
         int8_t offset = (instr & 255);
-
+        //+++ it doesn't grab any addresses here
         if (!((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }

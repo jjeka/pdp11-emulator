@@ -64,6 +64,8 @@
 
 #define VCPU_KEYBOARD_INTERRUPT_PRIORITY        4
 
+const int ticks_per_mode[8] = {0, 2, 3, 5, 3, 5, 3, 5};
+
 enum VcpuStatus
 {
     VCPU_STATUS_OK,

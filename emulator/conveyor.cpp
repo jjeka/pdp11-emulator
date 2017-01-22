@@ -78,10 +78,122 @@
  * 5) заметим, что при продвижении выбирается ближайшая точка завершения этапа некоторой инструкции; при этом, если мы выбрали продвигать
  *    этап, зависимый от шины, то одновременно продвигается этап, зависимый от АЛУ - и наоборот.
  *
- * Из вышесказанного запишем то, как же будет выглядеть класс конвейера:
+ * Из вышесказанного запишем то, как же будет выглядеть класс конвейера.
  *
  * */
 conveyor::conveyor()
 {
 
+}
+
+uint64_t conveyor::add_instruction(instr_model *instr)
+{
+    instr->instr_num = instr_counter_;
+    instr->conv_phase = 0;
+    instr_counter_++;
+    bool can_insert_instr = false; //we can insert new instruction if every instruction on conveyor has passed first phase; otherwise
+                                   //we have to make advancements until no instruction is in first phase and we have less than cap number
+                                   //of instructions
+    while (!can_insert_instr)
+    {
+        can_insert_instr = true;
+        for (int i = 0; i < conv_model_.size(); i++)
+            if (conv_model_[i]->conv_phase == 0)
+            {
+                can_insert_instr = false;
+                break;
+            }
+        if (can_insert_instr && (conv_model_.size() < instruction_cap_))
+            break;
+        advance();
+    }
+    conv_model_.push_back(instr);
+    return instr_counter_;
+}
+
+void conveyor::advance()
+{
+    if (conv_model_.empty())
+        return;
+    //std::vector<uint64_t> delayed_instructions;
+    //int min_ticks_to_adv = INT32_MAX;
+    instr_model * hyp_instr = conv_model_[0]; //hypothetical instruction to advance; we try with instruction awaiting it's fetch
+    //bool instr_chosen = false; //have we chosen instruction to advance or not?
+    /*while (!instr_chosen)
+    {
+        instr_chosen = true;
+        for (int i = 0; i < conv_model_.size(); i++)
+        {
+            bool is_delayed = false;
+            for (int j = 0; j < delayed_instructions.size(); j++)
+                if (delayed_instructions[j] == conv_model_[i])
+                {
+                    is_delayed = true;
+                    break;
+                }
+            if (is_delayed)
+                continue;
+
+            if ((conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] - conv_model_[i]->curr_phase_advance) <
+                (hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance))
+            {//jump point is closer in time; gotta check memory collisions
+
+            }
+        }
+    }*/
+    for (int i = 0; i < conv_model_.size(); i++)
+    {//looking for a closer jump point
+
+        if ((conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] - conv_model_[i]->curr_phase_advance) <
+            (hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance))
+        {//jump point is closer in time; gotta check memory collisions
+            bool no_collision = true;
+
+            if (conv_model_[i]->conv_phase == 4)
+            {// collision is possible only on write-back
+
+                for (int j = 0; j < conv_model_.size(); j++)
+                {
+
+                    if (conv_model_[j]->instr_num >= conv_model_[i]->instr_num)
+                        continue; //instruction happens after our chosen; no collision
+                    //collision: we try to write into area from which previous instruction reads; lost causality
+
+
+
+
+
+                    for (int ii = 0; ii < conv_model_[i]->dependencies_out.size(); ii++)
+                    {
+
+                        for (int jj = 0; jj < conv_model_[j]->dependencies_in.size(); jj++)
+                        {
+
+                            if (conv_model_[i]->dependencies_out[ii] == conv_model_[j]->dependencies_in[jj])
+                            {// yup, that's a collision
+                                no_collision = false;
+                                break;
+                            }
+                        }
+
+                        if (!no_collision)
+                            break;
+                    }
+                    if (!no_collision)
+                        break;
+                }
+            }
+
+            if (no_collision)
+            {//so, our jump point is closer and no collisions are present
+                hyp_instr = conv_model_[i];
+            }
+        }
+    }
+    //so, we found closest jump point - closest event in our conveyor model. It's time to advance our conveyor accordingly
+    //our instruction is first to switch to the next phase; therefore, all other instruction will advance inside their phases
+    //(considering bus and ALU occupation)
+}
+uint64_t conveyor::get_ticks()
+{
 }
