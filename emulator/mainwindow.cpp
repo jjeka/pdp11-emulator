@@ -68,16 +68,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     //QString caption1 = "Elapsed ticks:", caption2 = "with conveyor", caption3 = "without conveyor";
-    QHBoxLayout* conveyorLayout = new QHBoxLayout();
+    QHBoxLayout* conveyorLayout1 = new QHBoxLayout();
+    QHBoxLayout* conveyorLayout2 = new QHBoxLayout();
     QLabel* label_caption1 = new QLabel("with conveyor:");
     QLabel* label_caption2 = new QLabel("without conveyor:");
     QLabel* label_with_conv = new QLabel("0", this);
     QLabel* label_without_conv = new QLabel("0", this);
-    conveyorLayout->addWidget(label_caption1);
-    conveyorLayout->addWidget(label_with_conv);
-    conveyorLayout->addWidget(label_caption2);
-    conveyorLayout->addWidget(label_without_conv);
-    ui_->registersLayout->addRow("Elapsed ticks:", conveyorLayout);
+    conveyorLayout1->addWidget(label_caption1);
+    conveyorLayout1->addWidget(label_with_conv);
+    conveyorLayout2->addWidget(label_caption2);
+    conveyorLayout2->addWidget(label_without_conv);
+    ui_->registersLayout->addWidget(new QLabel(tr("Elapsed ticks")));
+    ui_->registersLayout->addRow(conveyorLayout1);
+    ui_->registersLayout->addRow(conveyorLayout2);
     conveyorValues_.push_back(label_with_conv);
     conveyorValues_.push_back(label_without_conv);
     createMenus_();
@@ -99,6 +102,7 @@ void MainWindow::refreshCpuState_()
     FLAG_REGISTERS()
     #undef FLAG_REGISTER
     conveyorValues_[0]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_with_conv()));
+    //conveyorValues_[0]->setText(QString().sprintf("%" PRId64, 1000000000000));
     conveyorValues_[1]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_without_conv()));
 }
 

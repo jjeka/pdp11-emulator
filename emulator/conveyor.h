@@ -14,7 +14,8 @@ struct instr_model
     uint64_t instr_num = 0; //counter to track instruction order
     InstructionType type;   //number of operands and how we refer to them
     uint16_t instr;         //instruction word; is used to determine how much ticks it consumes on ALU
-    unsigned dependencies_in[8], dependencies_out[8]; //addresses of memory dependencies of instruction; is used to determine if
+    unsigned dependencies_in[8] = {0, 0, 0, 0, 0, 0, 0, 0},
+             dependencies_out[8]= {0, 0, 0, 0, 0, 0, 0, 0}; //addresses of memory dependencies of instruction; is used to determine if
                                                             //delayed advance will be in place
     int dependencies_in_num = 0, dependencies_out_num = 0;
     int curr_phase_advance; //when conveyor decides to advance, it seeks smallest ticks_per_phase - curr_phase_advance value; it is
@@ -22,8 +23,8 @@ struct instr_model
     int alu_occupation = -1;//which alu instruction occupies in phase of computation; -1 if it doesn't occupy any now
     int ticks_to_fetch;
     int ticks_to_writeback;
-    int conv_phase;
-    bool has_advanced;
+    int conv_phase = 0;
+    bool has_advanced = false;
 };
 
 class conveyor

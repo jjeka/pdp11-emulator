@@ -582,12 +582,16 @@ void Vcpu::executeInstruction_()
     getPC() += sizeof (uint16_t);
 
     VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
-
-
+    instr_m->instr_num = 0;
+    instr_m->dependencies_in_num = 0;
+    instr_m->dependencies_out_num = 0;
+    instr_m->has_advanced = 0;
+    instr_m->curr_phase_advance = 0;
     instr_m->ticks_per_phase[0] = 2;
     instr_m->ticks_per_phase[1] = 1;
+    instr_m->ticks_per_phase[2] = 1;
     instr_m->ticks_per_phase[3] = instructions_[instr].ticks;
-
+    instr_m->ticks_per_phase[4] = 1;
     switch (instructions_[instr].type)
     {
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
@@ -640,9 +644,19 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
 
-   //     instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
-   //     instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
-        //+++continue here
+        /*instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
+        instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
+        instr_m->dependencies_in[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+        instr_m->dependencies_in[1] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER);
+        instr_m->dependencies_in_num = 2;
+
+        instr_m->dependencies_out[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER);
+        instr_m->dependencies_in_num = 1;*/
+        if (VCPU_GET_REG(instr, 6) % 2 == 0)
+        {
+            instr_m->dependencies_in_num++;
+            instr_m->dependencies_out[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6) + 1, VCPU_ADDR_MODE_REGISTER);
+        }
         MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0)), this);
         MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER), this);
         MemRegion16 reg2Region(getAddrByAddrMode_(

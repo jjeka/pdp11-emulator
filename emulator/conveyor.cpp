@@ -13,7 +13,7 @@ uint64_t conveyor::add_instruction(instr_model *instr)
 {
     /**free(instr);
     return 0;*/
-
+    //print_state();
     instr->instr_num = instr_counter_;
     instr->conv_phase = 0;
     instr_counter_++;
@@ -42,15 +42,7 @@ uint64_t conveyor::add_instruction(instr_model *instr)
 
 void conveyor::advance()
 {
-   /* for (int i = 0; i < (int) conv_model_.size(); i++)
-    {
-        if (conv_model_[i]->conv_phase == 0)
-        {
-            free(conv_model_[i]);
-            conv_model_.erase(conv_model_.begin() + i);
-        }
-    }
-    return;*/
+
     //print_state();
     if (conv_model_.empty())
         return;
@@ -197,7 +189,7 @@ void conveyor::advance()
         }
         conv_model_[i]->has_advanced = true;
     }
-
+    //print_state();
 }
 
 bool conveyor::is_memory_collision(int instr_ind)
@@ -248,7 +240,7 @@ uint64_t conveyor::get_ticks_without_conv()
 
 void conveyor::print_state()
 {
-    printf("State:\n");
+    printf("State: %" PRId64" %" PRId64"\n", cur_ticks_, ticks_without_conv_);
     for (int i = 0; i < 5; i++)
     {
         printf("\t%d:", i+1);
