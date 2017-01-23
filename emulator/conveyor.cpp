@@ -2,17 +2,27 @@
 
 conveyor::conveyor()
 {
-
+    ticks_without_conv_ = 0;
+    cur_ticks_ = 0;
+    instr_counter_ = 0;
+    instruction_cap_ = 10;
+    alu_num_ = 3;
 }
 
 uint64_t conveyor::add_instruction(instr_model *instr)
 {
+    /**free(instr);
+    return 0;*/
+
     instr->instr_num = instr_counter_;
     instr->conv_phase = 0;
     instr_counter_++;
     bool can_insert_instr = false; //we can insert new instruction if every instruction on conveyor has passed first phase; otherwise
                                    //we have to make advancements until no instruction is in first phase and we have less than cap number
                                    //of instructions
+    for (int i = 0; i < 5; i++)
+        ticks_without_conv_ += instr->ticks_per_phase[i];
+
     while (!can_insert_instr)
     {
         can_insert_instr = true;
@@ -32,6 +42,16 @@ uint64_t conveyor::add_instruction(instr_model *instr)
 
 void conveyor::advance()
 {
+   /* for (int i = 0; i < (int) conv_model_.size(); i++)
+    {
+        if (conv_model_[i]->conv_phase == 0)
+        {
+            free(conv_model_[i]);
+            conv_model_.erase(conv_model_.begin() + i);
+        }
+    }
+    return;*/
+
     if (conv_model_.empty())
         return;
 
@@ -55,38 +75,7 @@ void conveyor::advance()
             if (conv_model_[i]->conv_phase == 3 && conv_model_[i]->curr_phase_advance == 0 && alu_occupied >= alu_num_)
                 no_collision = false;
 
-            if (conv_model_[i]->conv_phase == 4)
-            {// collision is possible only on write-back
-
-                for (int j = 0; j < (int) conv_model_.size(); j++)
-                {
-
-                    if (conv_model_[j]->instr_num >= conv_model_[i]->instr_num)
-                        continue; //instruction happens after our chosen; no collision
-                    //collision: we try to write into area from which previous instruction reads; lost causality
-
-                    for (int ii = 0; ii < (int) conv_model_[i]->dependencies_out.size(); ii++)
-                    {
-
-                        for (int jj = 0; jj < (int) conv_model_[j]->dependencies_in.size(); jj++)
-                        {
-
-                            if (conv_model_[i]->dependencies_out[ii] == conv_model_[j]->dependencies_in[jj])
-                            {// yup, that's a collision
-                                no_collision = false;
-                                break;
-                            }
-                        }
-
-                        if (!no_collision)
-                            break;
-                    }
-                    if (!no_collision)
-                        break;
-                }
-            }
-
-            if (no_collision)
+            if (!is_memory_collision(i) && no_collision)
             {//so, our jump point is closer and no collisions are present and there is free ALU if we need one
                 hyp_instr = conv_model_[i];
             }
@@ -110,7 +99,11 @@ void conveyor::advance()
 
         if (conv_model_[i]->curr_phase_advance == 0) //if execution of phase has not began, we advance it in next iteration
             continue;
-
+        if (is_memory_collision(i))
+        {
+            conv_model_[i]->has_advanced = true;
+            continue;
+        }
         //first we occupy bus if necessary and if possible
         if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
         {
@@ -157,6 +150,11 @@ void conveyor::advance()
     {
         if (conv_model_[i]->has_advanced)
             continue;
+        if (is_memory_collision(i))
+        {
+            conv_model_[i]->has_advanced = true;
+            continue;
+        }
         if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
         {
             if (!bus_occupied)
@@ -196,9 +194,51 @@ void conveyor::advance()
         }
         conv_model_[i]->has_advanced = true;
     }
-
+    printf("PING\n");
 }
-uint64_t conveyor::get_ticks()
+
+bool conveyor::is_memory_collision(int instr_ind)
+{
+    bool no_collision = true;
+
+    if (conv_model_[instr_ind]->conv_phase == 4)
+    {// collision is possible only on write-back
+
+        for (int j = 0; j < (int) conv_model_.size(); j++)
+        {
+
+            if (conv_model_[j]->instr_num >= conv_model_[instr_ind]->instr_num)
+                continue; //instruction happens after our chosen; no collision
+            //collision: we try to write into area from which previous instruction reads; lost causality
+
+            for (int ii = 0; ii < (int) conv_model_[instr_ind]->dependencies_out_num; ii++)
+            {
+
+                for (int jj = 0; jj < (int) conv_model_[j]->dependencies_in_num; jj++)
+                {
+
+                    if (conv_model_[instr_ind]->dependencies_out[ii] == conv_model_[j]->dependencies_in[jj])
+                    {// yup, that's a collision
+                        no_collision = false;
+                        break;
+                    }
+                }
+
+                if (!no_collision)
+                    break;
+            }
+            if (!no_collision)
+                break;
+        }
+    }
+    return !no_collision;
+}
+
+uint64_t conveyor::get_ticks_with_conv()
 {
     return cur_ticks_;
+}
+uint64_t conveyor::get_ticks_without_conv()
+{
+    return ticks_without_conv_;
 }

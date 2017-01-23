@@ -575,13 +575,14 @@ void Vcpu::executeInstruction_()
     assert(instructions_[instr].callback);
 
     instr_model * instr_m = new(instr_model); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
-                                              //    memory region dependencies, operand type
+                                           //    memory region dependencies, operand type
     instr_m->type = instructions_[instr].type;
     instr_m->instr = instr;
     uint16_t prevPC = getPC();
     getPC() += sizeof (uint16_t);
 
     VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
+
 
     instr_m->ticks_per_phase[0] = 2;
     instr_m->ticks_per_phase[1] = 1;
@@ -604,22 +605,27 @@ void Vcpu::executeInstruction_()
             MemRegion8 srcRegion(srcAddr, this);
             MemRegion8 dstRegion(dstAddr, this);
 
-            instr_m->dependencies_in.push_back(srcAddr);
-            instr_m->dependencies_in.push_back(dstAddr);
-            instr_m->dependencies_out.push_back(dstAddr);
+            instr_m->dependencies_in[0] = srcAddr;
+            instr_m->dependencies_in[1] = dstAddr;
+            instr_m->dependencies_in_num = 2;
+
+            instr_m->dependencies_out[0] = dstAddr;
+            instr_m->dependencies_out_num = 1;
 
             if (!((vcpu_instr_double_operand_8_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
                 status_ = VCPU_STATUS_INVALID_INSTRUCTION;
         }
         else
         {
-            instr_m->dependencies_in.push_back(srcAddr);
-            instr_m->dependencies_in.push_back(dstAddr);
-            instr_m->dependencies_out.push_back(dstAddr);
-            instr_m->dependencies_in.push_back(srcAddr+1);
-            instr_m->dependencies_out.push_back(dstAddr+1);
-            instr_m->dependencies_in.push_back(dstAddr+1);
+            instr_m->dependencies_in[0] = srcAddr;
+            instr_m->dependencies_in[1] = dstAddr;
+            instr_m->dependencies_in[2] = srcAddr + 1;
+            instr_m->dependencies_in[3] = dstAddr + 1;
+            instr_m->dependencies_in_num = 4;
 
+            instr_m->dependencies_out[0] = dstAddr;
+            instr_m->dependencies_out[1] = dstAddr + 1;
+            instr_m->dependencies_out_num = 2;
             MemRegion16 srcRegion(srcAddr, this);
             MemRegion16 dstRegion(dstAddr, this);
 
@@ -634,8 +640,8 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
 
-        instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
-        instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
+   //     instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
+   //     instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
         //+++continue here
         MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0)), this);
         MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER), this);
@@ -751,6 +757,7 @@ void Vcpu::executeInstruction_()
     }
     else if (status_ != VCPU_STATUS_OK)
         getPC() = prevPC;
+    conv_.add_instruction(instr_m);
 }
 
 bool Vcpu::isByteInstruction_(uint16_t instr)
@@ -903,4 +910,14 @@ bool Vcpu::interrupt(unsigned priority, uint16_t vectorAddress)
 Keyboard& Vcpu::getKeyboard()
 {
     return keyboard_;
+}
+
+uint64_t Vcpu::get_ticks_with_conv()
+{
+    return conv_.get_ticks_with_conv();
+}
+
+uint64_t Vcpu::get_ticks_without_conv()
+{
+    return conv_.get_ticks_without_conv();
 }

@@ -66,6 +66,20 @@ MainWindow::MainWindow(QWidget *parent) :
     flagsLayout->addStretch();
     ui_->registersLayout->addRow("Flags", flagsLayout);
 
+
+    //QString caption1 = "Elapsed ticks:", caption2 = "with conveyor", caption3 = "without conveyor";
+    QHBoxLayout* conveyorLayout = new QHBoxLayout();
+    QLabel* label_caption1 = new QLabel("with conveyor:");
+    QLabel* label_caption2 = new QLabel("without conveyor:");
+    QLabel* label_with_conv = new QLabel("0", this);
+    QLabel* label_without_conv = new QLabel("0", this);
+    conveyorLayout->addWidget(label_caption1);
+    conveyorLayout->addWidget(label_with_conv);
+    conveyorLayout->addWidget(label_caption2);
+    conveyorLayout->addWidget(label_without_conv);
+    ui_->registersLayout->addRow("Elapsed ticks:", conveyorLayout);
+    conveyorValues_.push_back(label_with_conv);
+    conveyorValues_.push_back(label_without_conv);
     createMenus_();
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -84,6 +98,8 @@ void MainWindow::refreshCpuState_()
 
     FLAG_REGISTERS()
     #undef FLAG_REGISTER
+    conveyorValues_[0]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_with_conv()));
+    conveyorValues_[1]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_without_conv()));
 }
 
 QString MainWindow::flagString_(QString name, bool value)

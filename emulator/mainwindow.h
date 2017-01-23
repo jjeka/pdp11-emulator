@@ -29,6 +29,7 @@ private:
     Ui::MainWindow *ui_;
     Vcpu* vcpu_;
     std::vector<QLineEdit*> registerValues_;
+    std::vector<QLabel*> conveyorValues_;
     Screen* screen_;
     DisasModel* disasModel_;
     ClickableLabel* flagNRegister_;

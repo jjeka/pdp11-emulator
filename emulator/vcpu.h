@@ -124,6 +124,8 @@ public:
 
     bool interrupt(unsigned priority, uint16_t vectorAddress);
 
+    uint64_t get_ticks_with_conv();
+    uint64_t get_ticks_without_conv();
 private:
     Bus bus_;
     VcpuStatus status_;
