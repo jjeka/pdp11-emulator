@@ -31,6 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui_->disasView->setFocusPolicy(Qt::NoFocus);
     ui_->disasView->setSelectionMode(QAbstractItemView::NoSelection);
 
+    saved_conv_ticks_ = 0;
+    saved_no_conv_ticks_ = 0;
+    saved_instr_num_ = 0;
+
     for (unsigned i = 0; i < vcpu_->getNRegisters(); i++)
     {
         QString label = vcpu_->getRegisterName(i).c_str();
@@ -120,24 +124,35 @@ void MainWindow::refreshCpuState_()
     uint64_t ticks_conv = vcpu_->get_ticks_with_conv();
     uint64_t ticks_no_conv = vcpu_->get_ticks_without_conv();
 
+    uint64_t t = saved_conv_ticks_;
+    uint64_t tt = saved_no_conv_ticks_;
+    uint64_t ttt = saved_instr_num_;
+
+    saved_conv_ticks_ = ticks_conv;
+    saved_no_conv_ticks_ = ticks_no_conv;
+    saved_instr_num_ = instr_num;
+
     conveyorValues_[0]->setText(QString().sprintf("%" PRId64, ticks_conv));
     //conveyorValues_[0]->setText(QString().sprintf("%" PRId64, 1000000000000));
     conveyorValues_[1]->setText(QString().sprintf("%" PRId64, ticks_no_conv));
-    if (instr_num <= 0)
+    if (instr_num - ttt <= 0)
     {
         conveyorValues_[2]->setText(QString().sprintf("NaN"));
         conveyorValues_[3]->setText(QString().sprintf("NaN"));
     }
     else
     {
-        while (instr_num > 100000)
+        while (instr_num - ttt > 100000)
         {
             instr_num /= 10;
             ticks_conv /= 10;
             ticks_no_conv /= 10;
+            t /= 10;
+            tt /= 10;
+            ttt /= 10;
         }
-        conveyorValues_[2]->setText(QString().sprintf("%f", ((double)ticks_conv)/((double)instr_num)));
-        conveyorValues_[3]->setText(QString().sprintf("%f", ((double)ticks_no_conv)/((double)instr_num)));
+        conveyorValues_[2]->setText(QString().sprintf("%f", ((double)(ticks_conv - t))/((double)(instr_num - ttt))));
+        conveyorValues_[3]->setText(QString().sprintf("%f", ((double)(ticks_no_conv - tt))/((double)(instr_num - ttt))));
     }
 }
 

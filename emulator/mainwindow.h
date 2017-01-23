@@ -45,7 +45,9 @@ private:
     void setVcpuControlsToState_(bool running);
     void checkVcpuStatus_();
     void createMenus_();
-
+    uint64_t saved_conv_ticks_;
+    uint64_t saved_no_conv_ticks_;
+    uint64_t saved_instr_num_;
 Q_SIGNALS:
     void executionStopped();
 
