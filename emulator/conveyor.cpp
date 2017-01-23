@@ -51,7 +51,7 @@ void conveyor::advance()
         }
     }
     return;*/
-
+    //print_state();
     if (conv_model_.empty())
         return;
 
@@ -88,7 +88,7 @@ void conveyor::advance()
     int advance_ticks = hyp_instr->ticks_per_phase[hyp_instr->conv_phase] - hyp_instr->curr_phase_advance;
     //number of ticks by which conveyor advances
 
-    cur_ticks_ += (uint64_t) advance_ticks; //track advancement
+    cur_ticks_ += (uint64_t) advance_ticks; //tick advancement
 
     for (int i = 0; i < (int)conv_model_.size(); i++)
         conv_model_[i]->has_advanced = false; //no instruction has advanced yet
@@ -133,9 +133,9 @@ void conveyor::advance()
         if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
         {//if current phase is finished - transfer to the next one
             conv_model_[i]->conv_phase++;
+            conv_model_[i]->curr_phase_advance = 0;
             while(conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] == 0)
                 conv_model_[i]->conv_phase++;
-            conv_model_[i]->curr_phase_advance = 0;
 
             if (conv_model_[i]->conv_phase > 4)
             {//we advanced past last phase - pop instruction from conveyor and free occupied by support structures memory
@@ -148,6 +148,7 @@ void conveyor::advance()
 
     for (int i = 0; i < (int)conv_model_.size(); i++)
     {
+
         if (conv_model_[i]->has_advanced)
             continue;
         if (is_memory_collision(i))
@@ -179,12 +180,14 @@ void conveyor::advance()
         conv_model_[i]->curr_phase_advance += advance_ticks;
 
         if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
-        {//if current phase is finished - transfer to the next one
+        {
+        //if current phase is finished - transfer to the next one
             conv_model_[i]->conv_phase++;
+            conv_model_[i]->curr_phase_advance = 0;
             while(conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] == 0)
                 conv_model_[i]->conv_phase++;
 
-            conv_model_[i]->curr_phase_advance = 0;
+
 
             if (conv_model_[i]->conv_phase > 4)
             {//we advanced past last phase - pop instruction from conveyor and free occupied by support structures memory
@@ -194,7 +197,7 @@ void conveyor::advance()
         }
         conv_model_[i]->has_advanced = true;
     }
-    printf("PING\n");
+
 }
 
 bool conveyor::is_memory_collision(int instr_ind)
@@ -241,4 +244,17 @@ uint64_t conveyor::get_ticks_with_conv()
 uint64_t conveyor::get_ticks_without_conv()
 {
     return ticks_without_conv_;
+}
+
+void conveyor::print_state()
+{
+    printf("State:\n");
+    for (int i = 0; i < 5; i++)
+    {
+        printf("\t%d:", i+1);
+        for (int j = 0; j < conv_model_.size(); j++)
+            if (conv_model_[j]->conv_phase == i)
+                printf(" %d(%d out of %d)", conv_model_[j]->instr_num, conv_model_[j]->curr_phase_advance, conv_model_[j]->ticks_per_phase[i]);
+        printf("\n");
+    }
 }

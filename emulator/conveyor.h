@@ -10,7 +10,7 @@
 //we also need instruction structure/object to pass from vcpu to conveyor
 struct instr_model
 {
-    int ticks_per_phase[5]; //how much ticks consumes each phase; may be set to 0 if respective conveyor phase is not applicable
+    int ticks_per_phase[5] = {1, 1, 1, 1, 1}; //how much ticks consumes each phase; may be set to 0 if respective conveyor phase is not applicable
     uint64_t instr_num = 0; //counter to track instruction order
     InstructionType type;   //number of operands and how we refer to them
     uint16_t instr;         //instruction word; is used to determine how much ticks it consumes on ALU
@@ -46,6 +46,7 @@ private:
     void advance();             //searches instruction to advance it on conveyor and modifies conveyor model accordingly
     std::vector<instr_model*> conv_model_; //place where instruction models are stored
     bool is_memory_collision(int instr_ind);
+    void print_state();
 };
 
 #endif // CONVEYOR_H
