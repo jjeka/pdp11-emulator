@@ -5,15 +5,17 @@ Conveyor::Conveyor()
     ticks_without_conv_ = 0;
     cur_ticks_ = 0;
     instr_counter_ = 0;
-    instruction_cap_ = 10;
-    alu_num_ = 3;
+    instruction_cap_ = INSTRUCTION_CAP;
+    alu_num_ = ALU_NUM;
 }
+
+/*Conveyor::~Conveyor()
+{
+
+}*/
 
 uint64_t Conveyor::add_instruction(InstrModel *instr)
 {
-    /**free(instr);
-    return 0;*/
-    //print_state();
     instr->instr_num = instr_counter_;
     instr->conv_phase = 0;
     instr_counter_++;
@@ -91,22 +93,33 @@ void Conveyor::advance()
 
         if (conv_model_[i]->curr_phase_advance == 0) //if execution of phase has not began, we advance it in next iteration
             continue;
+
+        //check if some instruction with flow influence actually blocked this instruction
+        for (int j = 0; j < (int)conv_model_.size(); j++)
+            if (conv_model_[j]->instr_num < conv_model_[i]->instr_num)
+                if (conv_model_[j]->flow_influence)
+                {
+                    conv_model_[i]->has_advanced = true;
+                    continue;
+                }
+
         if (is_memory_collision(i))
         {
             conv_model_[i]->has_advanced = true;
             continue;
         }
-        //first we occupy bus if necessary and if possible
-        if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
+        if (needs_bus(i))
         {
-            if (!bus_occupied)
-                bus_occupied = true; //if we have to use bus and its free - occupy it
-            else
-            {//if bus is occupied - we can't advance
+            if (bus_occupied)
+            {
                 conv_model_[i]->has_advanced = true;
                 continue;
             }
+            else
+                bus_occupied = true;
+
         }
+
 
         //occupy one ALU if necessary
         if (conv_model_[i]->conv_phase == 3)
@@ -143,22 +156,33 @@ void Conveyor::advance()
 
         if (conv_model_[i]->has_advanced)
             continue;
+        //check if some instruction with flow influence actually blocked this instruction
+        for (int j = 0; j < (int)conv_model_.size(); j++)
+            if (conv_model_[j]->instr_num < conv_model_[i]->instr_num)
+                if (conv_model_[j]->flow_influence)
+                {
+                    conv_model_[i]->has_advanced = true;
+                    continue;
+                }
         if (is_memory_collision(i))
         {
             conv_model_[i]->has_advanced = true;
             continue;
         }
-        if (conv_model_[i]->conv_phase == 0 || conv_model_[i]->conv_phase == 2 || conv_model_[i]->conv_phase == 4)
+
+        if (needs_bus(i))
         {
-            if (!bus_occupied)
-                bus_occupied = true; //if we have to use bus and its free - occupy it
-            else
-            {//if bus is occupied - we can't advance
+            if (bus_occupied)
+            {
                 conv_model_[i]->has_advanced = true;
                 continue;
             }
+            else
+                bus_occupied = true;
+
         }
-         //occupy one ALU if necessary
+
+        //occupy one ALU if necessary
         if (conv_model_[i]->conv_phase == 3)
         {
             if (alu_occupied < alu_num_)
@@ -204,6 +228,9 @@ bool Conveyor::is_memory_collision(int instr_ind)
 
             if (conv_model_[j]->instr_num >= conv_model_[instr_ind]->instr_num)
                 continue; //instruction happens after our chosen; no collision
+            if (conv_model_[j]->conv_phase > 2)
+                continue;
+
             //collision: we try to write into area from which previous instruction reads; lost causality
 
             for (int ii = 0; ii < (int) conv_model_[instr_ind]->dependencies_out_num; ii++)
@@ -244,13 +271,32 @@ void Conveyor::print_state()
     for (int i = 0; i < 5; i++)
     {
         printf("\t%d:", i+1);
-        for (int j = 0; j < conv_model_.size(); j++)
+        for (int j = 0; j < (int)conv_model_.size(); j++)
             if (conv_model_[j]->conv_phase == i)
-                printf(" %d(%d out of %d)", conv_model_[j]->instr_num, conv_model_[j]->curr_phase_advance, conv_model_[j]->ticks_per_phase[i]);
+                printf(" %" PRId64 "(%d out of %d)", conv_model_[j]->instr_num, conv_model_[j]->curr_phase_advance, conv_model_[j]->ticks_per_phase[i]);
         printf("\n");
     }
 }
 uint64_t Conveyor::get_instr_num()
 {
     return instr_counter_;
+}
+
+bool Conveyor::needs_bus(int instr_ind)
+{
+    if (conv_model_[instr_ind]->conv_phase == 0)
+        return true;
+    if (conv_model_[instr_ind]->conv_phase == 2)
+    {
+        for (int i = 0; i < conv_model_[instr_ind]->dependencies_in_num; i++)
+            if (conv_model_[instr_ind]->dependencies_in[i] < UINT16_MAX)
+                return true;
+    }
+    if (conv_model_[instr_ind]->conv_phase == 4)
+    {
+        for (int i = 0; i < conv_model_[instr_ind]->dependencies_out_num; i++)
+            if (conv_model_[instr_ind]->dependencies_out[i] < UINT16_MAX)
+                return true;
+    }
+    return false;
 }

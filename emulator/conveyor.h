@@ -7,24 +7,29 @@
 
 #include "instructions.h"
 #include "memregion.h"
+
+#define DEFAULT_NUM_OF_DEPENDENCIES 0
+#define DEFAULT_PHASE_LEN 1
+#define ALU_NUM 3
+#define INSTRUCTION_CAP 10
+#define DEFAULT_MEMORY_DEPENDENCY 0
+#define STARTING_CONV_PHASE 0
 //we also need instruction structure/object to pass from vcpu to conveyor
 struct InstrModel
 {
-    int ticks_per_phase[5] = {1, 1, 1, 1, 1}; //how much ticks consumes each phase; may be set to 0 if respective conveyor phase is not applicable
+    int ticks_per_phase[5] = {DEFAULT_PHASE_LEN}; //how much ticks consumes each phase; may be set to 0 if respective conveyor phase is not applicable
     uint64_t instr_num = 0; //counter to track instruction order
     InstructionType type;   //number of operands and how we refer to them
     uint16_t instr;         //instruction word; is used to determine how much ticks it consumes on ALU
-    unsigned dependencies_in[8] = {0, 0, 0, 0, 0, 0, 0, 0},
-             dependencies_out[8]= {0, 0, 0, 0, 0, 0, 0, 0}; //addresses of memory dependencies of instruction; is used to determine if
+    unsigned dependencies_in[8] = {DEFAULT_MEMORY_DEPENDENCY},
+             dependencies_out[8]= {DEFAULT_MEMORY_DEPENDENCY}; //addresses of memory dependencies of instruction; is used to determine if
                                                             //delayed advance will be in place
-    int dependencies_in_num = 0, dependencies_out_num = 0;
+    int dependencies_in_num = DEFAULT_NUM_OF_DEPENDENCIES, dependencies_out_num = DEFAULT_NUM_OF_DEPENDENCIES;
     int curr_phase_advance; //when conveyor decides to advance, it seeks smallest ticks_per_phase - curr_phase_advance value; it is
                             //point of it's jump (if no delayed progress is in place). Also it's modified on conveyor advance.
-    int alu_occupation = -1;//which alu instruction occupies in phase of computation; -1 if it doesn't occupy any now
-    int ticks_to_fetch;
-    int ticks_to_writeback;
-    int conv_phase = 0;
+    int conv_phase = STARTING_CONV_PHASE;
     bool has_advanced = false;
+    int flow_influence = 0;
 };
 
 class Conveyor
@@ -49,6 +54,7 @@ private:
     std::vector<InstrModel*> conv_model_; //place where instruction models are stored
     bool is_memory_collision(int instr_ind);
     void print_state();
+    bool needs_bus(int instr_ind);
 };
 
 #endif // CONVEYOR_H

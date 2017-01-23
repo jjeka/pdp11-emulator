@@ -31,7 +31,8 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
                         VCPU_INSTRUCTIONS[i].name,
                         VCPU_INSTRUCTIONS[i].callback,
                         VCPU_INSTRUCTIONS[i].type,
-                        VCPU_INSTRUCTIONS[i].ticks_to_compute); //+++
+                        VCPU_INSTRUCTIONS[i].ticks_to_compute,
+                        VCPU_INSTRUCTIONS[i].flow_influence); //+++
 
     for (int i = 0; i < VCPU_NUM_INSTRUCTIONS; i++)
     {
@@ -53,7 +54,7 @@ VcpuStatus Vcpu::getStatus()
     return status_;
 }
 
-void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type, int ticks) //+++
+void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type, int ticks, int flow_influence) //+++
 {
     assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED || type == VCPU_INSTR_TYPE_INVALID_OPCODE);
     assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
@@ -81,6 +82,7 @@ void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void*
         instructions_[i].callback = callback;
         instructions_[i].name = nameAddr;
         instructions_[i].ticks = ticks; //+++
+        instructions_[i].flow_influence = flow_influence; //+++
     }
 }
 
@@ -582,6 +584,7 @@ void Vcpu::executeInstruction_()
     getPC() += sizeof (uint16_t);
 
     VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
+    instr_m->flow_influence = instructions_[instr].flow_influence;
     instr_m->instr_num = 0;
     instr_m->dependencies_in_num = 0;
     instr_m->dependencies_out_num = 0;

@@ -145,6 +145,7 @@ private:
         void* callback;
         std::string* name;
         int ticks;
+        int flow_influence;
     };
 
     std::array<Instruction, VCPU_NUM_INSTRUCTIONS> instructions_;
@@ -171,7 +172,7 @@ private:
     bool haltHit_;
 
     void threadFunc_();
-    void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type, int ticks); //+++
+    void addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type, int ticks, int flow_influence); //+++
     std::string getOperand_(uint16_t pc, uint16_t instr, int begin, uint16_t data, bool* dataNeeded, bool secondParam);
     std::string getRegisterByInstr_(uint16_t instr, int begin);
     void executeInstruction_();

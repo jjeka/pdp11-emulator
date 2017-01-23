@@ -31,6 +31,7 @@ struct InstructionInfo
     InstructionType type;
     /*+++*/
     int ticks_to_compute;
+    int flow_influence;
 };
 
 extern InstructionInfo VCPU_INSTRUCTIONS[];
