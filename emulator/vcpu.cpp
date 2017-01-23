@@ -30,7 +30,8 @@ Vcpu::Vcpu(std::string romFile, std::function<void()> executionStoppedCallback) 
                         VCPU_INSTRUCTIONS[i].end,
                         VCPU_INSTRUCTIONS[i].name,
                         VCPU_INSTRUCTIONS[i].callback,
-                        VCPU_INSTRUCTIONS[i].type);
+                        VCPU_INSTRUCTIONS[i].type,
+                        VCPU_INSTRUCTIONS[i].ticks_to_compute); //+++
 
     for (int i = 0; i < VCPU_NUM_INSTRUCTIONS; i++)
     {
@@ -52,7 +53,7 @@ VcpuStatus Vcpu::getStatus()
     return status_;
 }
 
-void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type)
+void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void* callback, InstructionType type, int ticks) //+++
 {
     assert(callback || type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED || type == VCPU_INSTR_TYPE_INVALID_OPCODE);
     assert(type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
@@ -79,6 +80,7 @@ void Vcpu::addInstruction_(uint16_t begin, uint16_t end, std::string name, void*
         instructions_[i].type = type;
         instructions_[i].callback = callback;
         instructions_[i].name = nameAddr;
+        instructions_[i].ticks = ticks; //+++
     }
 }
 
@@ -554,8 +556,6 @@ void Vcpu::executeInstruction_()
     haltHit_ = false;
 
     //+++ conveyor
-    // this is instruction fetch
-    // +2 ticks - set adress & get response
     uint16_t instr = getWordAtAddress(getPC());
 
     if (instructions_[instr].type == VCPU_INSTR_TYPE_NOT_IMPLEMENTED)
@@ -583,24 +583,43 @@ void Vcpu::executeInstruction_()
 
     VcpuPSW psw = { getNegativeFlag(), getZeroFlag(), getOverflowFlag(), getCarryFlag() };
 
+    instr_m->ticks_per_phase[0] = 2;
+    instr_m->ticks_per_phase[1] = 1;
+    instr_m->ticks_per_phase[3] = instructions_[instr].ticks;
+
     switch (instructions_[instr].type)
     {
     case VCPU_INSTR_TYPE_DOUBLE_OPERAND:
     {
         unsigned srcAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_GET_ADDR_MODE(instr, 6));
         unsigned dstAddr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+
         //+++ grab addresses and insert them into instr_model structure
         //+++ also grab address modes - it depends on addressing mode how much time takes a fetch or a writeback
+        instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 0)];
+        instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 0)];
+
         if (isByteInstruction_(instr))
         {
             MemRegion8 srcRegion(srcAddr, this);
             MemRegion8 dstRegion(dstAddr, this);
+
+            instr_m->dependencies_in.push_back(srcAddr);
+            instr_m->dependencies_in.push_back(dstAddr);
+            instr_m->dependencies_out.push_back(dstAddr);
 
             if (!((vcpu_instr_double_operand_8_callback*) instructions_[instr].callback)(dstRegion, srcRegion, psw))
                 status_ = VCPU_STATUS_INVALID_INSTRUCTION;
         }
         else
         {
+            instr_m->dependencies_in.push_back(srcAddr);
+            instr_m->dependencies_in.push_back(dstAddr);
+            instr_m->dependencies_out.push_back(dstAddr);
+            instr_m->dependencies_in.push_back(srcAddr+1);
+            instr_m->dependencies_out.push_back(dstAddr+1);
+            instr_m->dependencies_in.push_back(dstAddr+1);
+
             MemRegion16 srcRegion(srcAddr, this);
             MemRegion16 dstRegion(dstAddr, this);
 
@@ -614,6 +633,10 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_OPERAND_REGISTER:
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
+
+        instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
+        instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
+        //+++continue here
         MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0)), this);
         MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER), this);
         MemRegion16 reg2Region(getAddrByAddrMode_(

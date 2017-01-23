@@ -29,6 +29,8 @@ struct InstructionInfo
     std::string name;
     void* callback;
     InstructionType type;
+    /*+++*/
+    int ticks_to_compute;
 };
 
 extern InstructionInfo VCPU_INSTRUCTIONS[];

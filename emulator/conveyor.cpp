@@ -187,24 +187,9 @@ void conveyor::advance()
 
     cur_ticks_ += (uint64_t) advance_ticks; //track advancement
 
-/*    if (hyp_instr->conv_phase == 0 || hyp_instr->conv_phase == 2 || hyp_instr->conv_phase == 4)
-        bus_occupied = true; //our instruction performs operation fetch or operand fetch or write-back
-    if (hyp_instr->conv_phase == 3)
-        alu_occupied ++;
-
-    hyp_instr->conv_phase ++; //our instruction passes to the next conveyor stage
-*/
     for (int i = 0; i < (int)conv_model_.size(); i++)
         conv_model_[i]->has_advanced = false; //no instruction has advanced yet
 
-    /*if (hyp_instr->conv_phase >= 5)
-    {//this instruction's execution have finished; pop it from conveyor
-        int i;
-        for (i = 0; i < (int)conv_model_.size(); i++)
-            if (conv_model_[i] == hyp_instr)
-                break;
-        conv_model_.erase(conv_model_.begin() + i);
-    }*/
 
     for (int i = 0; i < (int)conv_model_.size(); i++)
     {//we look at our instructions and try to advance their execution by advance_ticks;  first we try unfinished instructions
@@ -241,6 +226,8 @@ void conveyor::advance()
         if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
         {//if current phase is finished - transfer to the next one
             conv_model_[i]->conv_phase++;
+            while(conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] == 0)
+                conv_model_[i]->conv_phase++;
             conv_model_[i]->curr_phase_advance = 0;
 
             if (conv_model_[i]->conv_phase > 4)
@@ -282,6 +269,9 @@ void conveyor::advance()
         if (conv_model_[i]->curr_phase_advance >= conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase])
         {//if current phase is finished - transfer to the next one
             conv_model_[i]->conv_phase++;
+            while(conv_model_[i]->ticks_per_phase[conv_model_[i]->conv_phase] == 0)
+                conv_model_[i]->conv_phase++;
+
             conv_model_[i]->curr_phase_advance = 0;
 
             if (conv_model_[i]->conv_phase > 4)
