@@ -574,7 +574,7 @@ void Vcpu::executeInstruction_()
     assert(instructions_[instr].type != VCPU_INSTR_TYPE_NOT_INITIALIZED);
     assert(instructions_[instr].callback);
 
-    instr_model * instr_m = new(instr_model); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
+    InstrModel * instr_m = new(InstrModel); //+++ structure which is passed to conveyor; must fill type, number of ticks to exec,
                                            //    memory region dependencies, operand type
     instr_m->type = instructions_[instr].type;
     instr_m->instr = instr;
@@ -934,4 +934,8 @@ uint64_t Vcpu::get_ticks_with_conv()
 uint64_t Vcpu::get_ticks_without_conv()
 {
     return conv_.get_ticks_without_conv();
+}
+uint64_t Vcpu::get_instr_num()
+{
+    return conv_.get_instr_num();
 }

@@ -1,6 +1,6 @@
 #include "conveyor.h"
 
-conveyor::conveyor()
+Conveyor::Conveyor()
 {
     ticks_without_conv_ = 0;
     cur_ticks_ = 0;
@@ -9,7 +9,7 @@ conveyor::conveyor()
     alu_num_ = 3;
 }
 
-uint64_t conveyor::add_instruction(instr_model *instr)
+uint64_t Conveyor::add_instruction(InstrModel *instr)
 {
     /**free(instr);
     return 0;*/
@@ -40,14 +40,14 @@ uint64_t conveyor::add_instruction(instr_model *instr)
     return instr_counter_;
 }
 
-void conveyor::advance()
+void Conveyor::advance()
 {
 
     //print_state();
     if (conv_model_.empty())
         return;
 
-    instr_model * hyp_instr = conv_model_[0]; //hypothetical instruction to advance; we try with instruction awaiting it's fetch
+    InstrModel * hyp_instr = conv_model_[0]; //hypothetical instruction to advance; we try with instruction awaiting it's fetch
 
     int alu_occupied = 0;
     bool bus_occupied = false;
@@ -192,7 +192,7 @@ void conveyor::advance()
     //print_state();
 }
 
-bool conveyor::is_memory_collision(int instr_ind)
+bool Conveyor::is_memory_collision(int instr_ind)
 {
     bool no_collision = true;
 
@@ -229,16 +229,16 @@ bool conveyor::is_memory_collision(int instr_ind)
     return !no_collision;
 }
 
-uint64_t conveyor::get_ticks_with_conv()
+uint64_t Conveyor::get_ticks_with_conv()
 {
     return cur_ticks_;
 }
-uint64_t conveyor::get_ticks_without_conv()
+uint64_t Conveyor::get_ticks_without_conv()
 {
     return ticks_without_conv_;
 }
 
-void conveyor::print_state()
+void Conveyor::print_state()
 {
     printf("State: %" PRId64" %" PRId64"\n", cur_ticks_, ticks_without_conv_);
     for (int i = 0; i < 5; i++)
@@ -249,4 +249,8 @@ void conveyor::print_state()
                 printf(" %d(%d out of %d)", conv_model_[j]->instr_num, conv_model_[j]->curr_phase_advance, conv_model_[j]->ticks_per_phase[i]);
         printf("\n");
     }
+}
+uint64_t Conveyor::get_instr_num()
+{
+    return instr_counter_;
 }

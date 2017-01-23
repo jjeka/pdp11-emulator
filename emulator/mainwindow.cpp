@@ -70,19 +70,33 @@ MainWindow::MainWindow(QWidget *parent) :
     //QString caption1 = "Elapsed ticks:", caption2 = "with conveyor", caption3 = "without conveyor";
     QHBoxLayout* conveyorLayout1 = new QHBoxLayout();
     QHBoxLayout* conveyorLayout2 = new QHBoxLayout();
-    QLabel* label_caption1 = new QLabel("with conveyor:");
-    QLabel* label_caption2 = new QLabel("without conveyor:");
+
+    QLabel* label_caption11 = new QLabel("with conveyor:");
+    QLabel* label_caption21 = new QLabel("without conveyor:");
     QLabel* label_with_conv = new QLabel("0", this);
     QLabel* label_without_conv = new QLabel("0", this);
-    conveyorLayout1->addWidget(label_caption1);
+    conveyorLayout1->addWidget(label_caption11);
     conveyorLayout1->addWidget(label_with_conv);
-    conveyorLayout2->addWidget(label_caption2);
+    conveyorLayout2->addWidget(label_caption21);
     conveyorLayout2->addWidget(label_without_conv);
+
+    QLabel* label_caption12 = new QLabel("per instruction:");
+    QLabel* label_caption22 = new QLabel("per instruction:");
+    QLabel* label_with_conv_avg = new QLabel("0", this);
+    QLabel* label_without_conv_avg = new QLabel("0", this);
+    conveyorLayout1->addWidget(label_caption12);
+    conveyorLayout1->addWidget(label_with_conv_avg);
+    conveyorLayout2->addWidget(label_caption22);
+    conveyorLayout2->addWidget(label_without_conv_avg);
+
+
     ui_->registersLayout->addWidget(new QLabel(tr("Elapsed ticks")));
     ui_->registersLayout->addRow(conveyorLayout1);
     ui_->registersLayout->addRow(conveyorLayout2);
     conveyorValues_.push_back(label_with_conv);
     conveyorValues_.push_back(label_without_conv);
+    conveyorValues_.push_back(label_with_conv_avg);
+    conveyorValues_.push_back(label_without_conv_avg);
     createMenus_();
     setFocusPolicy(Qt::StrongFocus);
 }
@@ -101,9 +115,30 @@ void MainWindow::refreshCpuState_()
 
     FLAG_REGISTERS()
     #undef FLAG_REGISTER
-    conveyorValues_[0]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_with_conv()));
+
+    uint64_t instr_num = vcpu_->get_instr_num();
+    uint64_t ticks_conv = vcpu_->get_ticks_with_conv();
+    uint64_t ticks_no_conv = vcpu_->get_ticks_without_conv();
+
+    conveyorValues_[0]->setText(QString().sprintf("%" PRId64, ticks_conv));
     //conveyorValues_[0]->setText(QString().sprintf("%" PRId64, 1000000000000));
-    conveyorValues_[1]->setText(QString().sprintf("%" PRId64, vcpu_->get_ticks_without_conv()));
+    conveyorValues_[1]->setText(QString().sprintf("%" PRId64, ticks_no_conv));
+    if (instr_num <= 0)
+    {
+        conveyorValues_[2]->setText(QString().sprintf("NaN"));
+        conveyorValues_[3]->setText(QString().sprintf("NaN"));
+    }
+    else
+    {
+        while (instr_num > 100000)
+        {
+            instr_num /= 10;
+            ticks_conv /= 10;
+            ticks_no_conv /= 10;
+        }
+        conveyorValues_[2]->setText(QString().sprintf("%f", ((double)ticks_conv)/((double)instr_num)));
+        conveyorValues_[3]->setText(QString().sprintf("%f", ((double)ticks_no_conv)/((double)instr_num)));
+    }
 }
 
 QString MainWindow::flagString_(QString name, bool value)

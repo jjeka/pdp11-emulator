@@ -126,6 +126,7 @@ public:
 
     uint64_t get_ticks_with_conv();
     uint64_t get_ticks_without_conv();
+    uint64_t get_instr_num();
 private:
     Bus bus_;
     VcpuStatus status_;
@@ -154,7 +155,7 @@ private:
     std::function<void()> executionStoppedCallback_;
     std::thread thread_;
 
-    conveyor conv_;
+    Conveyor conv_;
 
     enum VcpuThreadState
     {

@@ -8,7 +8,7 @@
 #include "instructions.h"
 #include "memregion.h"
 //we also need instruction structure/object to pass from vcpu to conveyor
-struct instr_model
+struct InstrModel
 {
     int ticks_per_phase[5] = {1, 1, 1, 1, 1}; //how much ticks consumes each phase; may be set to 0 if respective conveyor phase is not applicable
     uint64_t instr_num = 0; //counter to track instruction order
@@ -27,14 +27,15 @@ struct instr_model
     bool has_advanced = false;
 };
 
-class conveyor
+class Conveyor
 {
 public:
-    conveyor();
-    uint64_t add_instruction(instr_model* instr); //is called from vcpu; takes instruction object with full information about
+    Conveyor();
+    uint64_t add_instruction(InstrModel* instr); //is called from vcpu; takes instruction object with full information about
                                                   //instruction and includes it in conveyor model
     uint64_t get_ticks_with_conv();       //returns current number of elapsed ticks; is used to display progress in UI
     uint64_t get_ticks_without_conv();
+    uint64_t get_instr_num();
 private:
     uint64_t cur_ticks_;
     uint64_t ticks_without_conv_;
@@ -45,7 +46,7 @@ private:
                                 //one
     uint64_t instruction_num_;  //current number of instrucions stuck on the conveyor
     void advance();             //searches instruction to advance it on conveyor and modifies conveyor model accordingly
-    std::vector<instr_model*> conv_model_; //place where instruction models are stored
+    std::vector<InstrModel*> conv_model_; //place where instruction models are stored
     bool is_memory_collision(int instr_ind);
     void print_state();
 };
