@@ -647,20 +647,25 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_OPERAND_REGISTER_EX:
     {
 
-        /*instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
+        instr_m->ticks_per_phase[2] = ticks_per_mode[VCPU_GET_ADDR_MODE(instr, 6)] + ticks_per_mode[VCPU_ADDR_MODE_REGISTER];
         instr_m->ticks_per_phase[4] = ticks_per_mode[VCPU_ADDR_MODE_REGISTER] * ((VCPU_GET_REG(instr, 6) % 2 == 0) ? 2 : 1);
-        instr_m->dependencies_in[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+
+        int t = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
+        instr_m->dependencies_in[0] = t;
+        //instr_m->dependencies_in[2] = t + 1;
         instr_m->dependencies_in[1] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER);
+        //instr_m->dependencies_in[3] = instr_m->dependencies_in[1] + 1;
         instr_m->dependencies_in_num = 2;
 
         instr_m->dependencies_out[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER);
-        instr_m->dependencies_in_num = 1;*/
+        instr_m->dependencies_in_num = 1;
         if (VCPU_GET_REG(instr, 6) % 2 == 0)
         {
             instr_m->dependencies_in_num++;
-            instr_m->dependencies_out[0] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6) + 1, VCPU_ADDR_MODE_REGISTER);
+            instr_m->dependencies_out[1] = getAddrByAddrMode_(VCPU_GET_REG(instr, 6) + 1, VCPU_ADDR_MODE_REGISTER);
         }
-        MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0)), this);
+        //MemRegion16 srcRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0)), this);
+        MemRegion16 srcRegion(t, this);
         MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER), this);
         MemRegion16 reg2Region(getAddrByAddrMode_(
                                  (VCPU_GET_REG(instr, 6) % 2 == 0) ? (VCPU_GET_REG(instr, 6) + 1) : VCPU_GET_REG(instr, 6),
@@ -683,7 +688,12 @@ void Vcpu::executeInstruction_()
 
     case VCPU_INSTR_TYPE_SINGLE_REGISTER:
     {
-        MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_ADDR_MODE_REGISTER), this);
+        int t = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_ADDR_MODE_REGISTER);
+        MemRegion16 regRegion(t, this);
+        instr_m->dependencies_in[0] = t;
+        instr_m->dependencies_out[0] = t;
+        instr_m->dependencies_in_num = 1;
+        instr_m->dependencies_out_num = 1;
         //+++ grab addresses and insert them into instr_model structure
         if (!((vcpu_instr_single_register_callback*) instructions_[instr].callback)
                 (regRegion, *this))
@@ -695,14 +705,24 @@ void Vcpu::executeInstruction_()
     {
         unsigned addr = getAddrByAddrMode_(VCPU_GET_REG(instr, 0), VCPU_GET_ADDR_MODE(instr, 0));
         //+++ grab addresses and insert them into instr_model structure
+        instr_m->dependencies_in[0] = addr;
+        instr_m->dependencies_out[0] = addr;
+        instr_m->dependencies_in_num = 1;
+        instr_m->dependencies_out_num = 1;
+
         if (isByteInstruction_(instr))
         {
+
             MemRegion8 region(addr, this);
             if (!((vcpu_instr_single_operand_8_callback*) instructions_[instr].callback)(region, psw))
                 status_ = VCPU_STATUS_INVALID_INSTRUCTION;
         }
         else
         {
+            instr_m->dependencies_in[1] = addr + 1;
+            instr_m->dependencies_out[1] = addr + 1;
+            instr_m->dependencies_in_num = 2;
+            instr_m->dependencies_out_num = 2;
             MemRegion16 region(addr, this);
             if (!((vcpu_instr_single_operand_16_callback*) instructions_[instr].callback)(region, psw))
                 status_ = VCPU_STATUS_INVALID_INSTRUCTION;
@@ -720,6 +740,8 @@ void Vcpu::executeInstruction_()
 
     case VCPU_INSTR_TYPE_BRANCH:
     {
+        instr_m->dependencies_in_num = 0;
+        instr_m->dependencies_out_num = 0;
         int8_t offset = (instr & 255);
         //+++ it doesn't grab any addresses here
         if (!((vcpu_instr_branch_callback*) instructions_[instr].callback)(getPC(), offset, psw))
@@ -739,8 +761,12 @@ void Vcpu::executeInstruction_()
     case VCPU_INSTR_TYPE_REGISTER_NUMBER:
     {
         uint8_t n = (instr & 63);
-        MemRegion16 regRegion(getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER), this);
-
+        int t = getAddrByAddrMode_(VCPU_GET_REG(instr, 6), VCPU_ADDR_MODE_REGISTER);
+        MemRegion16 regRegion(t, this);
+        instr_m->dependencies_in_num = 1;
+        instr_m->dependencies_out_num = 1;
+        instr_m->dependencies_in[0] = t;
+        instr_m->dependencies_out[0] = t;
         if (!((vcpu_instr_register_number_callback*) instructions_[instr].callback)(regRegion, n, *this))
             status_ = VCPU_STATUS_INVALID_INSTRUCTION;
     }

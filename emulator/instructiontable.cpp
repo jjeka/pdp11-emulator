@@ -87,7 +87,7 @@ InstructionInfo VCPU_INSTRUCTIONS[] = {
     { 0000100, 0000177, "jmp" , (void*) instr_jmp , VCPU_INSTR_TYPE_SINGLE_OPERAND_EX, 1, 1 },
     { 0004000, 0004777, "jsr" , (void*) instr_jsr , VCPU_INSTR_TYPE_OPERAND_REGISTER_EX , 3, 1 },
     { 0000200, 0000207, "rts" , (void*) instr_rts , VCPU_INSTR_TYPE_SINGLE_REGISTER , 10, 1 },
-    { 0006400, 0006477, "mark", (void*) instr_mark, VCPU_INSTR_TYPE_NUMBER, 1, 0 },
+    { 0006400, 0006477, "mark", (void*) instr_mark, VCPU_INSTR_TYPE_NUMBER, 1, 1 },
     { 0077000, 0077777, "sob" , (void*) instr_sob , VCPU_INSTR_TYPE_REGISTER_NUMBER, 10, 1 },
 
     { 0000002, 0000002, "rti", (void*) instr_rti, VCPU_INSTR_TYPE_WITHOUT_PARAMETERS, 10, 1 },
